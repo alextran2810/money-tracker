@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Money Tracker</title>
+
+  <!-- 3rd party libs -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://eqblphvyqfibxhrtniwq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxYmxwaHZ5cWZpYnhocnRuaXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzcwOTUsImV4cCI6MjA3MzQxMzA5NX0.QaTyuEstLGI3ISGli9ykWwmowSDKCXjiHn6xOf1oKEw";
+  </script>
+  <style>
+    :root{
+      --bg:#e9eef5; --panel:#f7f9fc; --ink:#1e2330; --muted:#57637a; --border:#c8d3e5;
+      --good:#189a52; --warn:#e19b24; --bad:#d84b4b;
+
+      /* section colors */
+      --grocery1:#b6e8cf; --grocery2:#94dbbd;
+      --reimb1:#ffd29a;  --reimb2:#ffbf70;
+      --wages1:#c9b6ff;  --wages2:#b39aff;
+      --family1:#ffb3ce; --family2:#ff9fc3;
+
+      --scale:0.70;
+      --app-header-top:#3388ff;
+      --app-header-bot:#2270ee;
+      --app-header-border:#1d5fd1;
+
+      --row-h: 36px;
+      --header-h: 44px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-size:calc(16px * var(--scale));
+    }
+
+    /* ---------- AUTH VIEW ---------- */
+    .auth-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .auth-card{
+      width:min(92vw,480px);
+      background:linear-gradient(180deg,#f7f9fc,#eef3fb);
+      border:1px solid var(--border); border-radius:16px; padding:18px;
+      box-shadow:0 10px 26px rgba(0,0,0,.12);
+    }
+    .auth-card h1{ margin:0 0 10px; font-size:1.4rem; }
+    .auth-card p{ margin:0 0 14px; color:var(--muted); }
+    .auth-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
+    .auth-actions{ display:flex; gap:10px; margin-top:6px; align-items:center; }
+    .auth-msg{ min-height:20px; font-size:.95rem; color:var(--bad); }
+    .link-btn{ background:transparent; border:none; color:#194BFB; font-weight:700; cursor:pointer; padding:0; }
+    .remember-wrap{ display:flex; align-items:center; gap:6px; margin-top:4px; }
+    .remember-wrap input{ width:auto; }
+
+    header{
+      position:sticky; top:0; z-index:100;
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      background:linear-gradient(180deg, var(--app-header-top), var(--app-header-bot));
+      border-bottom:1px solid var(--app-header-border);
+      color:#000;
+    }
+    .title{font-weight:800; font-size:calc(1.4rem * var(--scale)); color:#000}
+    .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    #langSwitch{
+      background:rgba(255,255,255,.8); color:#000; border:1px solid rgba(0,0,0,.25);
+      border-radius:10px; padding:6px 10px; font-size:calc(.9rem * var(--scale)); width:60px;
+    }
+
+    .mini-btn{
+      background:#eef2f9; border:1px solid var(--border); color:#000;
+      padding:6px 8px; border-radius:8px; font-weight:700; cursor:pointer;
+      font-size:calc(.9rem * var(--scale)); line-height:1
+    }
+    .font-zoom{display:flex; align-items:center; gap:6px}
+    #fsSlider{width:50px; height:16px; background:transparent; -webkit-appearance:none;}
+    #fsSlider:focus{outline:none}
+    #fsSlider::-webkit-slider-runnable-track{height:4px; background:#cad6f2; border-radius:999px}
+    #fsSlider::-webkit-slider-thumb{
+      -webkit-appearance:none; width:12px; height:12px; margin-top:-4px;
+      background:#f0f4ff; border-radius:50%; border:1px solid #b9c7ea
+    }
+
+    .container{max-width:100%; width:100%; margin:0 auto; padding:12px}
+
+    .card{
+      border:1px solid var(--border); border-radius:16px; padding:12px; margin-bottom:14px;
+      box-shadow:0 6px 18px rgba(26,38,63,.06)
+    }
+    .card.grocery{  background:linear-gradient(180deg,var(--grocery1),var(--grocery2)); }
+    .card.reimb{    background:linear-gradient(180deg,var(--reimb1),var(--reimb2)); }
+    .card.wages{    background:linear-gradient(180deg,var(--wages1),var(--wages2)); }
+    .card.family{   background:linear-gradient(180deg,var(--family1),var(--family2)); }
+
+    .card-header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+    .card-title{display:flex; align-items:center; gap:10px; font-weight:800; color:#000}
+    .accent-dot{width:10px; height:10px; border-radius:50%}
+    .grocery .accent-dot{background:#10b981}
+    .reimb   .accent-dot{background:#f59e0b}
+    .wages   .accent-dot{background:#8b5cf6}
+    .family  .accent-dot{background:#f472b6}
+
+    .actions{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+
+    .btn{
+      background:#eef2f9; border:1px solid var(--border); color:var(--ink);
+      padding:6px 10px; border-radius:10px; font-weight:700; cursor:pointer;
+      font-size:calc(.95rem * var(--scale)); transition:transform .06s ease;
+    }
+    .btn:hover{background:#e9eef5;} .btn:active{opacity:.95;}
+    .btn.good{background:#e6f3ee; border-color:#cfe7db; color:#0e8f42}
+    .btn.warn{background:#fff1dd; border-color:#f3d9a8}
+    .btn.sm{padding:4px 8px; font-size:calc(.9rem * var(--scale))}
+    .icon-btn{ background:#eef2f9; border:1px solid var(--border); color:#000;
+      width:28px; height:28px; border-radius:7px; display:inline-grid; place-items:center;
+      cursor:pointer; transition:background .15s ease, opacity .1s ease;
+    }
+    .icon-btn:hover{background:#e9eef5;}
+
+    .kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+    .stat{background:#f4f7fb; border:1px solid var(--border); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:4px; min-height:76px}
+    .stat .label{color:var(--muted); font-size:calc(.85rem * var(--scale)); line-height:1.1}
+    .stat .label .short{display:none}
+    .stat .value{font-weight:900; font-size:calc(1.2rem * var(--scale))}
+    @media(max-width:520px){ .stat .label .full{display:none} .stat .label .short{display:inline} }
+
+    .sheet-viewport{
+  
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:auto;
+      background:#fbfcff;
+      scrollbar-width:none; -ms-overflow-style:none;
+      max-height: calc(var(--header-h) + (var(--row-h) * 3));
+    }
+    .sheet-viewport::-webkit-scrollbar{ width:0; height:0; }
+
+    table{ width:100%; border-collapse:collapse; background:#fbfcff; table-layout:auto; }
+
+    thead{
+      position:sticky; top:0; z-index:1;
+      background:#e5e7eb; border-bottom:1px solid #cbd5e1;
+      height:var(--header-h);
+    }
+    thead th{
+      color:#000; text-align:left; font-weight:800;
+      padding:8px 10px; white-space:nowrap; height:var(--header-h);
+    }
+
+    tbody td{
+      padding:6px 10px; line-height:1.2; vertical-align:middle;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      border-bottom:1px solid #d1d5db; color:var(--ink);
+      height:var(--row-h);
+    }
+    tbody tr:nth-child(even){ background:#f3f4f6; }
+    tbody tr:hover{ background:#e5e7eb; }
+    tbody tr[data-has-attachment="true"]{ cursor:pointer; }
+
+    td.actions-cell{ white-space:nowrap; text-align:left; }
+
+    header .title{ color:#000; }
+
+    .placeholder-row td{
+      color:#7583a0; font-style:italic; text-align:center; padding:10px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      background:#f8fafc; border-bottom:1px solid #cbd5e1;
+    }
+
+    .card-title{ font-size:15px; font-weight:900; color:#000; }
+    .card-title .section-total{ margin-left:8px; font-weight:900; }
+
+    input,select{
+      width:100%; background:#ffffff; color:var(--ink); border:1px solid var(--border);
+      padding:8px 10px; border-radius:10px; font-size:calc(1rem * var(--scale))
+    }
+    input::placeholder{color:#8391ab}
+
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:9999}
+    .modal.open{display:flex}
+    .panel{
+      width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
+      border:1px solid var(--border); border-radius:16px; padding:14px; box-shadow:0 10px 26px rgba(0,0,0,.2)
+    }
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
+    .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
+
+    @keyframes shake{ 0%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
+    .mandatory-missing{border:2px solid var(--bad)!important; animation:shake .3s ease-in-out 0s 2; box-shadow:0 0 0 3px rgba(216,75,75,.08)}
+    .header-filters{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 14px; }
+    .header-filters .filter-label{ font-weight:800; color:var(--ink); }
+    .header-filters input[type="date"]{ width:auto; min-width:9.5ch; padding:6px 8px; font-size:calc(.95rem * var(--scale)); }
+    .header-filters .arrow{ opacity:.7; }
+    .header-filters .clear-btn{ background:#eef2f9; border:1px solid var(--border); color:#000; }
+  </style>
+</head>
+<body>
+  <!-- AUTH VIEW -->
+  <div id="authView" class="auth-wrap" style="display:flex">
+    <div class="auth-card">
+      <h1>Sign in</h1>
+      <p>Use your email and password to access your data.</p>
+      <form id="authLoginForm" class="auth-grid">
+        <div>
+          <label>Email
+            <input id="authEmail" type="email" placeholder="you@example.com" required>
+          </label>
+        </div>
+        <div>
+          <label>Password
+            <input id="authPassword" type="password" placeholder="••••••••" required>
+          </label>
+        </div>
+
+        <div class="remember-wrap">
+          <input id="rememberMe" type="checkbox">
+          <label for="rememberMe" style="margin:0;cursor:pointer">Remember me</label>
+        </div>
+
+        <div class="auth-actions">
+          <button type="submit" class="btn good">Sign in</button>
+          <button type="button" id="authCreateBtn" class="btn">Create account</button>
+        </div>
+        <div id="authMsg" class="auth-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP VIEW -->
+  <div id="appView" style="display:none">
+    <header>
+      <div class="title" id="appTitle">Money Tracker</div>
+      <div class="header-right">
+        <input type="file" id="importExcel" accept=".xlsx,.xls" style="display:none">
+        <button class="mini-btn" id="exportExcel">⬇ Export</button>
+        <button class="mini-btn" id="importBtn">⬆ Import</button>
+
+        <div class="font-zoom">
+          <button id="fsDown" class="mini-btn" title="Smaller">A−</button>
+          <input id="fsSlider" type="range" min="60" max="130" value="70" step="5" />
+          <button id="fsUp" class="mini-btn" title="Larger">A+</button>
+        </div>
+
+        <select id="langSwitch">
+          <option value="en">EN</option>
+          <option value="vi">VN</option>
+        </select>
+
+        <button class="mini-btn" id="signOutBtn" title="Sign out">Sign out</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- KPI BAR -->
+      <section class="card" id="kpiCard" style="background:linear-gradient(180deg,#f7f9fc,#eef3fb)">
+        <div class="kpi-grid">
+          <div class="stat"><div class="label" title="Total Family"><span class="full" id="kpiReceiptsLabel">Total Family</span><span class="short">Family</span></div><div class="value" id="kCount">0</div></div>
+          <div class="stat"><div class="label" title="Total Expense"><span class="full" id="kpiExpLabel">Total Expense</span><span class="short">Expense</span></div><div class="value" id="kExp">0</div></div>
+          <div class="stat"><div class="label" title="Total Reimbursed"><span class="full" id="kpiReimbLabel">Total Reimbursed</span><span class="short">Reimb.</span></div><div class="value" id="kReimb">0</div></div>
+          <div class="stat"><div class="label" title="Total Wages"><span class="full" id="kpiWagesLabel">Total Wages</span><span class="short">Wages</span></div><div class="value" id="kWages">0</div></div>
+        </div>
+      </section>
+
+      <!-- Date filter -->
+      <div class="header-filters" role="region" aria-label="Date filter">
+        <span class="filter-label" id="filterLabel">Filter</span>
+        <input type="date" id="filterStart" title="Start date">
+        <span class="arrow">→</span>
+        <input type="date" id="filterEnd" title="End date">
+        <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
+      </div>
+
+      <!-- WORK -->
+      <section class="card grocery">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="accent-dot"></span>
+            <span id="groceryTitle">Work Transactions</span>
+            <span class="section-total" id="groceryTotal">0</span>
+          </div>
+          <div class="actions">
+            <button class="btn good sm" id="btnEnterReceipt" title="Add Receipt">＋</button>
+          </div>
+        </div>
+        <div class="sheet-viewport">
+          <table>
+            <thead><tr id="groceryHead"></tr></thead>
+            <tbody id="reimbBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REIMBURSEMENT -->
+      <section class="card reimb">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="accent-dot"></span>
+            <span id="reimbTitle">Reimbursement</span>
+            <span class="section-total" id="reimbOnlyTotal">0</span>
+          </div>
+          <div class="actions">
+            <button class="btn good sm" id="addReimbOnlyRow" title="Add Reimbursement">＋</button>
+          </div>
+        </div>
+        <div class="sheet-viewport">
+          <table>
+            <thead><tr id="reimbHead"></tr></thead>
+            <tbody id="reimbOnlyBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- WAGES -->
+      <section class="card wages">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="accent-dot"></span>
+            <span id="wagesTitle">Wages</span>
+            <span class="section-total" id="wagesTotal">0</span>
+          </div>
+          <div class="actions">
+            <button class="btn good sm" id="addWageRow" title="Add Wage">＋</button>
+          </div>
+        </div>
+        <div class="sheet-viewport">
+          <table>
+            <thead><tr id="wagesHead"></tr></thead>
+            <tbody id="wagesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FAMILY -->
+      <section class="card family">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="accent-dot"></span>
+            <span id="familyTitle">Family Transactions</span>
+            <span class="section-total" id="homeTotal">0</span>
+          </div>
+          <div class="actions">
+            <button class="btn good sm" id="addFamilyRow" title="Add Family Transaction">＋</button>
+          </div>
+        </div>
+        <div class="sheet-viewport">
+          <table>
+            <thead><tr id="homeHead"></tr></thead>
+            <tbody id="homeBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Wages Modal -->
+  <div class="modal" id="wagesModal">
+    <div class="panel">
+      <div class="card-header">
+        <div class="card-title"><span class="accent-dot wages"></span><strong id="wagesModalTitle">Enter Your Wage</strong></div>
+        <div class="actions"><button class="btn warn sm" id="closeWagesModal">✕</button></div>
+      </div>
+      <div class="grid">
+        <div><label id="lblWDate">Date<input id="wDate" type="date"></label></div>
+        <div><label id="lblWHours">Hours<input id="wHours" type="number" step="0.01" min="0"></label></div>
+        <div><label id="lblWAmount">Wage Amount<input id="wAmount" type="number" step="0.01" min="0"></label></div>
+        <div><label id="lblWMethod">Method
+          <select id="wMethod">
+            <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
+          </select></label></div>
+        <div style="grid-column:span 12"><label id="lblWNotes">Notes<input id="wNotes" type="text"></label></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn good" id="addWagesRow">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work/Grocery Modal -->
+  <div class="modal" id="receiptModal">
+    <div class="panel">
+      <div class="card-header">
+        <div class="card-title"><span class="accent-dot grocery"></span><strong id="groceryModalTitle">Enter New Receipt</strong></div>
+        <div class="actions"><button class="btn warn sm" id="closeReceiptModal">✕</button></div>
+      </div>
+      <div class="grid">
+        <div><label id="lblGDate">Date<input id="gDate" type="date"></label></div>
+        <div><label id="lblGVendor">Store<input id="gVendor" type="text" placeholder="e.g., Costco"></label></div>
+        <div><label id="lblGTotal">Total<input id="gTotal" type="number" step="0.01"></label></div>
+        <div><label id="lblGMethod">Method
+          <select id="gPayMethod">
+            <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
+          </select></label></div>
+        <div><label id="lblGCard">Last 4<input id="gCardLast4" type="text" maxlength="4"></label></div>
+
+        <input type="file" id="receiptFile" accept="image/*" style="display:none">
+        <button class="btn" id="attachReceiptBtn">📎 Upload</button>
+        <div style="grid-column:span 12"><label id="lblGNotes">Notes<input id="gNotes" type="text"></label></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn good" id="addReceipt">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reimbursement Modal -->
+  <div class="modal" id="reimbOnlyModal">
+    <div class="panel">
+      <div class="card-header">
+        <div class="card-title"><span class="accent-dot reimb"></span><strong id="reimbModalTitle">Enter Your Reimbursement</strong></div>
+        <div class="actions"><button class="btn warn sm" id="closeReimbOnlyModal">✕</button></div>
+      </div>
+      <div class="grid">
+        <div><label id="lblRDate">Date<input id="rDate" type="date"></label></div>
+        <div><label id="lblRAmount">Amount<input id="rAmount" type="number" step="0.01"></label></div>
+        <div><label id="lblRMethod">Method
+          <select id="rMethod">
+            <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
+          </select></label></div>
+        <div style="grid-column:span 12"><label id="lblRNotes">Notes<input id="rNotes" type="text"></label></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn good" id="addReimbOnlyRowSubmit">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Family Modal -->
+  <div class="modal" id="familyModal">
+    <div class="panel">
+      <div class="card-header">
+        <div class="card-title"><span class="accent-dot family"></span><strong id="familyModalTitle">Enter Family Transaction</strong></div>
+        <div class="actions"><button class="btn warn sm" id="closeFamilyModal">✕</button></div>
+      </div>
+      <div class="grid">
+        <div><label id="lblFDate">Date<input id="fDate" type="date"></label></div>
+        <div><label id="lblFVendor">Store<input id="fVendor" type="text" placeholder="e.g., Target"></label></div>
+        <div><label id="lblFTotal">Total<input id="fTotal" type="number" step="0.01"></label></div>
+        <div><label id="lblFMethod">Method
+          <select id="fPayMethod">
+            <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
+          </select></label></div>
+        <div><label id="lblFCard">Last 4<input id="fCardLast4" type="text" maxlength="4"></label></div>
+
+        <input type="file" id="familyFile" accept="image/*" style="display:none">
+        <button class="btn" id="attachFamilyBtn">📎 Upload</button>
+
+        <div style="grid-column:span 12"><label id="lblFNotes">Notes<input id="fNotes" type="text"></label></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:8px">
+        <button class="btn good" id="addFamilySubmit">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attachment preview -->
+  <div class="modal" id="receiptPreviewModal" aria-modal="true" role="dialog">
+    <div class="panel" style="max-width:92vw">
+      <div class="card-header">
+        <div class="card-title"><span class="accent-dot grocery"></span><strong id="receiptAttachTitle">Receipt Attachment</strong></div>
+        <div class="actions"><button class="btn warn sm" id="closePreviewModal" aria-label="Close preview">✕</button></div>
+      </div>
+      <div style="text-align:center">
+        <img id="previewImg" src="" alt="Receipt Image" style="max-width:100%; max-height:70vh; border-radius:10px;"/>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== Supabase init ===== */
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let storageChecked = false;
+
+/* ===== Shortcuts & State ===== */
+const $ = s => document.querySelector(s);
+const byId = (id) => document.getElementById(id);
+const setText = (id, val) => { const el = byId(id); if (el) el.textContent = String(val); };
+
+let wagesRows = [], reimbRows = [], reimbOnlyRows = [], homeRows = [];
+const KEY_WAGES="wagesRows_v1", KEY_REIMB="reimbRows_v1", KEY_REIMBONLY="reimbOnlyRows_v1", KEY_HOME="homeRows_v1";
+const SCALE_KEY = "ui_scale";
+let pendingReceiptImage = null, pendingReceiptName = ""; // Work
+let pendingFamilyImage = null,  pendingFamilyName  = ""; // Family
+let currentUser = null;
+
+/* ===== Formatters (no decimals if not needed) ===== */
+function isInt(n){ return Number(n) === Math.trunc(Number(n)); }
+function fmtAutoPlain(n){
+  const num = Number(n||0);
+  return isInt(num) ? String(num) : num.toFixed(2);
+}
+function fmtAutoCurrency(n){
+  const num = Number(n||0);
+  const opts = {
+    style:'currency',
+    currency:'USD',
+    minimumFractionDigits: isInt(num) ? 0 : 2,
+    maximumFractionDigits: isInt(num) ? 0 : 2
+  };
+  return new Intl.NumberFormat('en-US', opts).format(num);
+}
+
+/* ====== AUTH HELPERS ====== */
+const authView = byId("authView");
+const appView  = byId("appView");
+const authMsg  = byId("authMsg");
+const signOutBtn = byId("signOutBtn");
+const REMEMBER_KEY = "authRemember";
+const REMEMBER_EMAIL = "authRememberEmail";
+
+function showAuthMessage(msg, isError=true){
+  if (!authMsg) return;
+  authMsg.style.color = isError ? "var(--bad)" : "var(--good)";
+  authMsg.textContent = msg || "";
+}
+function toggleUI(){
+  if (currentUser){
+    if (authView) authView.style.display = "none";
+    if (appView)  appView.style.display  = "block";
+    if (signOutBtn) signOutBtn.style.display = "inline-block";
+  } else {
+    if (appView)  appView.style.display  = "none";
+    if (authView) authView.style.display = "flex";
+    if (signOutBtn) signOutBtn.style.display = "none";
+  }
+}
+async function doSignIn(email, password){
+  showAuthMessage("");
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error){ showAuthMessage(error.message || "Sign-in failed"); return; }
+  currentUser = data.user || null;
+
+  // remember me
+  const remember = byId("rememberMe")?.checked;
+  try {
+    localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+    localStorage.setItem(REMEMBER_EMAIL, remember ? email : "");
+  } catch {}
+
+  toggleUI();
+  await loadFromDBAndRender();
+}
+async function doSignUp(email, password){
+  showAuthMessage("");
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error){ showAuthMessage(error.message || "Sign-up failed"); return; }
+  showAuthMessage("Account created. If email confirmation is required, check your inbox.", false);
+  try { await doSignIn(email, password); } catch {}
+}
+async function doSignOut(){
+  await supabase.auth.signOut();
+  currentUser = null;
+  toggleUI();
+}
+
+/* Hook up auth form */
+byId("authLoginForm")?.addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const email = byId("authEmail").value.trim();
+  const password = byId("authPassword").value;
+  if (!email || !password){ showAuthMessage("Email and password are required."); return; }
+  doSignIn(email, password);
+});
+byId("authCreateBtn")?.addEventListener("click", ()=>{
+  const email = byId("authEmail").value.trim();
+  const password = byId("authPassword").value;
+  if (!email || !password){ showAuthMessage("Enter email and password to create an account."); return; }
+  doSignUp(email, password);
+});
+signOutBtn?.addEventListener("click", doSignOut);
+
+// restore remember me
+(function restoreRemember(){
+  const remembered = localStorage.getItem(REMEMBER_KEY) === "1";
+  const email = localStorage.getItem(REMEMBER_EMAIL) || "";
+  if (byId("rememberMe")) byId("rememberMe").checked = remembered;
+  if (remembered && email && byId("authEmail")) byId("authEmail").value = email;
+})();
+
+/* ===== Language ===== */
+const langStrings = {
+  en: {
+    appTitle: "Money Tracker",
+    wages: "Wages", grocery: "Work Transactions", reimb: "Reimbursement", family: "Family Transactions",
+    enterWage: "Enter Your Wage", enterReceipt: "Enter New Receipt", enterReimb: "Enter Your Reimbursement", enterFamily: "Enter Family Transaction",
+    date: "Date", hours: "Hours", wageAmount: "Wage Amount", method: "Method", notes: "Notes", actions: "Actions",
+    total: "Total", store: "Store", last4: "Last 4", amount: "Amount", attachment: "Attachment",
+    kpiReceipts: "Total Family", kpiExp: "Total Expense", kpiReimb: "Total Reimbursed", kpiWages: "Total Wages",
+    emptyWages: "No wage records yet", emptyGrocery: "No work transactions yet", emptyReimb: "No reimbursements yet", emptyFamily: "No family transactions yet",
+    confirmDelete: "Delete this row?", upload: "📎 Upload",
+    filter: "Filter",
+    confirmDeleteTitle: "Confirm Delete",
+    confirmDeleteMsg: "Are you sure you want to delete this row?",
+    cancel: "Cancel",
+    delete: "Delete",
+    receiptAttachment: "Receipt Attachment"
+  },
+  vi: {
+    appTitle: "Theo dõi tiền",
+    wages: "Lương", grocery: "Giao dịch công việc", reimb: "Hoàn tiền", family: "Chi tiêu gia đình",
+    enterWage: "Nhập lương", enterReceipt: "Nhập hóa đơn mới", enterReimb: "Nhập hoàn tiền", enterFamily: "Nhập giao dịch gia đình",
+    date: "Ngày", hours: "Giờ", wageAmount: "Tiền lương", method: "Phương thức", notes: "Ghi chú", actions: "Thao tác",
+    total: "Tổng cộng", store: "Cửa hàng", last4: "4 số cuối", amount: "Số tiền", attachment: "Đính kèm",
+    kpiReceipts: "Tổng gia đình", kpiExp: "Tổng chi", kpiReimb: "Tổng hoàn lại", kpiWages: "Tổng lương",
+    emptyWages: "Chưa có dữ liệu lương", emptyGrocery: "Chưa có giao dịch công việc", emptyReimb: "Chưa có hoàn tiền", emptyFamily: "Chưa có giao dịch gia đình",
+    confirmDelete: "Xóa dòng này?", upload: "📎 Tải lên",
+    filter: "Bộ lọc",
+    confirmDeleteTitle: "Xác nhận xoá",
+    confirmDeleteMsg: "Bạn có chắc muốn xoá dòng này?",
+    cancel: "Hủy",
+    delete: "Xoá",
+    receiptAttachment: "Đính kèm hoá đơn"
+  }
+};
+
+function fmtUSD(n){ return fmtAutoCurrency(n); }
+let currentLang = "en";
+
+function setLang(code){
+  currentLang = code;
+  const t = langStrings[code] || langStrings.en;
+
+  byId("appTitle")?.replaceChildren(t.appTitle);
+
+  byId("wagesTitle")?.replaceChildren(t.wages);
+  byId("groceryTitle")?.replaceChildren(t.grocery);
+  byId("reimbTitle")?.replaceChildren(t.reimb);
+  byId("familyTitle")?.replaceChildren(t.family);
+
+  byId("wagesModalTitle")?.replaceChildren(t.enterWage);
+  byId("groceryModalTitle")?.replaceChildren(t.enterReceipt);
+  byId("reimbModalTitle")?.replaceChildren(t.enterReimb);
+  byId("familyModalTitle")?.replaceChildren(t.enterFamily);
+
+  byId("wagesHead") && (byId("wagesHead").innerHTML =
+    `<th>${t.date}</th><th>${t.hours}</th><th>${t.wageAmount}</th><th>${t.method}</th><th>${t.notes}</th><th>${t.actions}</th>`);
+
+  byId("groceryHead") && (byId("groceryHead").innerHTML =
+    `<th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th><th>${t.actions}</th>`);
+
+  byId("reimbHead") && (byId("reimbHead").innerHTML =
+    `<th>${t.date}</th><th>${t.amount}</th><th>${t.method}</th><th>${t.notes}</th><th>${t.actions}</th>`);
+
+  byId("homeHead") && (byId("homeHead").innerHTML =
+    `<th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th><th>${t.actions}</th>`);
+
+  byId("attachReceiptBtn")?.replaceChildren(t.upload);
+  byId("attachFamilyBtn")?.replaceChildren(t.upload);
+
+  byId("kpiReceiptsLabel")?.replaceChildren(t.kpiReceipts);
+  // Fallbacks prevent 'undefined' if a key is missing
+  byId("filterLabel")?.replaceChildren(t.filter || "Filter");
+  byId("confirmDeleteTitle")?.replaceChildren(t.confirmDeleteTitle || "Confirm Delete");
+  byId("confirmDeleteMsg")?.replaceChildren(t.confirmDeleteMsg || "Are you sure you want to delete this row?");
+  byId("cancelDeleteBtn")?.replaceChildren(t.cancel || "Cancel");
+  byId("confirmDeleteBtn")?.replaceChildren(t.delete || "Delete");
+  byId("receiptAttachTitle")?.replaceChildren(t.receiptAttachment || "Receipt Attachment");
+
+
+  byId("filterLabel")?.replaceChildren(t.filter);
+  byId("confirmDeleteTitle")?.replaceChildren(t.confirmDeleteTitle);
+  byId("confirmDeleteMsg")?.replaceChildren(t.confirmDeleteMsg);
+  byId("cancelDeleteBtn")?.replaceChildren(t.cancel);
+  byId("confirmDeleteBtn")?.replaceChildren(t.delete);
+  byId("receiptAttachTitle")?.replaceChildren(t.receiptAttachment);
+
+  renderAll();
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("langSwitch").addEventListener("change", e => setLang(e.target.value));
+});
+
+/* ===== UI Helpers ===== */
+function toast(msg){ /* quiet */ }
+function today(){ return new Date().toISOString().split("T")[0]; }
+
+function isValidMoney(s){
+  return /^(0|[1-9]\d*)(\.\d{1,2})?$/.test(String(s).trim());
+}
+function normMoney(s){
+  if (s === "" || s === null || s === undefined) return "0.00";
+  const str = String(s).trim();
+  if (!isValidMoney(str)) return null;
+  return Number(str).toFixed(2);
+}
+function validate(el){
+  if(!el.value && el.value !== 0){ el.classList.add("mandatory-missing"); setTimeout(()=>el.classList.remove("mandatory-missing"), 900); return false; }
+  return true;
+}
+
+/* ===== Icons ===== */
+function pencilSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/><path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>`}
+function trashSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function clipSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a5.5 5.5 0 01-7.78-7.78l9.19-9.19a3.5 3.5 0 015 5l-9.19 9.19a1.5 1.5 0 01-2.12-2.12l8.48-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+function photoSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h2l2-3h8l2 3h2a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+
+/* ===== Render helpers ===== */
+function td(text){ return `<td title="${(text??'').toString().replace(/"/g,'&quot;')}">${text??""}</td>`; }
+
+/* ===== Row builders (display no decimals when not needed) ===== */
+function wagesRowEl(r,i){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    ${td(r.date)}${td(fmtAutoPlain(r.hours))}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}
+    <td class="actions-cell">
+      <button class="icon-btn edit-wages" title="Edit" data-i="${i}" aria-label="Edit">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="wages" data-i="${i}" aria-label="Delete">${trashSVG()}</button>
+    </td>`;
+  return tr;
+}
+
+function reimbRowEl(r,i){
+  const tr=document.createElement("tr");
+  tr.dataset.i=i;
+  tr.dataset.hasAttachment = (!!r.receiptImg).toString();
+  if (r.receiptImg) { try { tr.setAttribute("data-receipt-src", r.receiptImg); } catch(_){} }
+  tr.innerHTML=`
+    ${td(r.date)}${td(r.vendor)}${td(fmtAutoPlain(r.expense))}${td(r.payMethod)}${td(r.cardLast4)}${td(r.notes)}
+    <td class="actions-cell">
+      ${r.receiptImg
+        ? `<button class="icon-btn view-attachment" title="View Attachment" data-i="${i}">${clipSVG()}</button>`
+        : `<button class="icon-btn add-attachment" title="Add Attachment" data-i="${i}">${photoSVG()}</button>`}
+    </td>
+    <td class="actions-cell">
+      <button class="icon-btn edit-reimb" title="Edit" data-i="${i}">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="reimb" data-i="${i}">${trashSVG()}</button>
+    </td>`;
+  return tr;
+}
+
+function homeRowEl(r,i){
+  const tr=document.createElement("tr");
+  tr.dataset.i=i;
+  tr.dataset.hasAttachment = (!!r.receiptImg).toString();
+  if (r.receiptImg) { try { tr.setAttribute("data-receipt-src", r.receiptImg); } catch(_){} }
+  tr.innerHTML=`
+    ${td(r.date)}${td(r.vendor)}${td(fmtAutoPlain(r.expense))}${td(r.payMethod)}${td(r.cardLast4)}${td(r.notes)}
+    <td class="actions-cell">
+      ${r.receiptImg
+        ? `<button class="icon-btn view-attachment" title="View Attachment" data-i="${i}" data-type="home">${clipSVG()}</button>`
+        : `<button class="icon-btn add-attachment" title="Add Attachment" data-i="${i}" data-type="home">${photoSVG()}</button>`}
+    </td>
+    <td class="actions-cell">
+      <button class="icon-btn edit-home" title="Edit" data-i="${i}">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="home" data-i="${i}">${trashSVG()}</button>
+    </td>`;
+  return tr;
+}
+
+function reimbOnlyRowEl(r,i){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    ${td(r.date)}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}
+    <td class="actions-cell">
+      <button class="icon-btn edit-reimbonly" title="Edit" data-i="${i}">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="reimbonly" data-i="${i}">${trashSVG()}</button>
+    </td>`;
+  return tr;
+}
+
+/* ===== Renderers ===== */
+function renderWages(){
+  const tb = byId("wagesBody"); if (!tb) return; tb.innerHTML = "";
+  let added = 0;
+  // iterate full array so indices match original array (for edit/delete)
+  wagesRows.forEach((r,i)=>{
+    if (!applyDateFilter([r], "date").length) return;
+    tb.appendChild(wagesRowEl(r,i));
+    added++;
+  });
+  if (added === 0){
+    const tr = document.createElement("tr"); tr.className = "placeholder-row";
+    tr.innerHTML = `<td colspan="6">${langStrings[currentLang].emptyWages}</td>`;
+    tb.appendChild(tr);
+  }
+  updateSectionTotals();
+}
+
+function renderReimb(){
+  const tb = byId("reimbBody"); if (!tb) return; tb.innerHTML = "";
+  let added = 0;
+  reimbRows.forEach((r,i)=>{
+    if (!applyDateFilter([r], "date").length) return;
+    tb.appendChild(reimbRowEl(r,i));
+    added++;
+  });
+  if (added === 0){
+    const tr = document.createElement("tr"); tr.className = "placeholder-row";
+    tr.innerHTML = `<td colspan="8">${langStrings[currentLang].emptyGrocery}</td>`;
+    tb.appendChild(tr);
+  }
+  updateSectionTotals();
+}
+
+function renderHome(){
+  const tb = byId("homeBody"); if (!tb) return; tb.innerHTML = "";
+  let added = 0;
+  homeRows.forEach((r,i)=>{
+    if (!applyDateFilter([r], "date").length) return;
+    tb.appendChild(homeRowEl(r,i));
+    added++;
+  });
+  if (added === 0){
+    const tr = document.createElement("tr"); tr.className = "placeholder-row";
+    tr.innerHTML = `<td colspan="8">${langStrings[currentLang].emptyFamily}</td>`;
+    tb.appendChild(tr);
+  }
+  updateSectionTotals();
+}
+
+function renderReimbOnly(){
+  const tb = byId("reimbOnlyBody"); if (!tb) return; tb.innerHTML = "";
+  let added = 0;
+  reimbOnlyRows.forEach((r,i)=>{
+    if (!applyDateFilter([r], "date").length) return;
+    tb.appendChild(reimbOnlyRowEl(r,i));
+    added++;
+  });
+  if (added === 0){
+    const tr = document.createElement("tr"); tr.className = "placeholder-row";
+    tr.innerHTML = `<td colspan="5">${langStrings[currentLang].emptyReimb}</td>`;
+    tb.appendChild(tr);
+  }
+  updateSectionTotals();
+}
+
+function renderAll(){ renderWages(); renderReimb(); renderReimbOnly(); renderHome(); updateKpis(); }
+
+/* ===== KPIs (always unfiltered; dynamic decimals) ===== */
+function updateKpis(){
+  const sum = (arr, key) =>
+    arr.reduce((a,b)=> a + (parseFloat((b[key]??"").toString().replace(/[^0-9.-]/g,""))||0), 0);
+
+  // KPI #1 shows Total Family
+  $("#kCount").textContent = fmtAutoCurrency(sum(homeRows,"expense"));
+  $("#kExp").textContent   = fmtAutoCurrency(sum(reimbRows,"expense") + sum(homeRows,"expense"));
+  $("#kReimb").textContent = fmtAutoCurrency(sum(reimbOnlyRows,"amount"));
+  $("#kWages").textContent = fmtAutoCurrency(sum(wagesRows,"amount"));
+}
+
+/* ===== Persistence (local) ===== */
+function cloneWithoutBigImages(arr){
+  return (arr||[]).map(r=>{
+    const c = {...r};
+    if (typeof c.receiptImg === "string" && c.receiptImg.startsWith("data:")) {
+      delete c.receiptImg;
+    }
+    return c;
+  });
+}
+function safeSetLocal(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e){
+    try{
+      const smaller = (val||[]).map(r=>{ const c={...r}; delete c.notes; return c; });
+      localStorage.setItem(key, JSON.stringify(smaller));
+    }catch{}
+  }
+}
+function saveAll(){
+  safeSetLocal(KEY_WAGES, wagesRows);
+  safeSetLocal(KEY_REIMB, cloneWithoutBigImages(reimbRows));
+  safeSetLocal(KEY_REIMBONLY, reimbOnlyRows);
+  safeSetLocal(KEY_HOME, cloneWithoutBigImages(homeRows));
+  updateKpis();
+}
+function loadAll(){
+  try{wagesRows=JSON.parse(localStorage.getItem(KEY_WAGES)||"[]")}catch{wagesRows=[]}
+  try{reimbRows=JSON.parse(localStorage.getItem(KEY_REIMB)||"[]")}catch{reimbRows=[]}
+  try{reimbOnlyRows=JSON.parse(localStorage.getItem(KEY_REIMBONLY)||"[]")}catch{reimbOnlyRows=[]}
+  try{homeRows=JSON.parse(localStorage.getItem(KEY_HOME)||"[]")}catch{homeRows=[]}
+  renderAll();
+}
+
+/* ===== Auth state ===== */
+async function getSessionUser() {
+  const { data: { session} } = await supabase.auth.getSession();
+  currentUser = session?.user ?? null;
+  return currentUser;
+}
+supabase.auth.onAuthStateChange((_evt, session) => {
+  currentUser = session?.user ?? null;
+  toggleUI();
+  if (currentUser) loadFromDBAndRender();
+});
+
+/* ===== Storage upload for receipts (quiet fallback) ===== */
+let storageOK = false;
+async function preflightStorage() {
+  // UPDATED: list a PUBLIC bucket path to verify access
+  if (storageChecked) return storageOK;
+  try {
+    const { data, error } = await supabase.storage.from("receipts").list("", { limit: 1 });
+    storageOK = !error;
+  } catch (_) {
+    storageOK = false;
+  }
+  storageChecked = true;
+  return storageOK;
+}
+async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
+  await preflightStorage();
+  if (!storageOK) {
+    return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
+  }
+
+  let blob, ext = "png";
+  if (typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:")) {
+    const res = await fetch(fileOrDataUrl);
+    blob = await res.blob();
+    ext = (blob.type || "image/png").split("/")[1] || "png";
+  } else {
+    blob = fileOrDataUrl;
+    ext = (blob?.type || "image/png").split("/")[1] || "png";
+  }
+
+  const path = `shared/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from("receipts").upload(path, blob, { upsert: false });
+  if (error) {
+    return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
+  }
+
+  const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
+  return pub.publicUrl;
+}
+
+/* ===== DB mapping + CRUD ===== */
+const T_WAGES  = "wages";
+const T_WORK   = "grocery";
+const T_REIMB  = "reimbursements";
+const T_FAMILY = "home_transactions";
+
+function nowIso(){ return new Date().toISOString(); }
+function ensureUser(){ if (!currentUser) throw new Error("No signed-in user. DB writes blocked."); }
+
+/* Fetch everything (KPIs unfiltered) */
+async function fetchRows(table, dateField="date"){
+  ensureUser();
+  let q = supabase.from(table).select("*").order(dateField, { ascending: true });
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+/* INSERT vs UPDATE split to avoid 428C9 on identity columns */
+async function upsertRow(table, payload){
+  ensureUser();
+
+  const hasId = !!payload?.id;
+  const base  = { ...payload, modified_on: nowIso() };
+
+  if (hasId) {
+    // Do NOT send `id` in UPDATE payload (identity column); target row via .eq("id", ...)
+    const updateBody = { ...base };
+    delete updateBody.id;
+
+    const { data, error } = await supabase
+      .from(table)
+      .update(updateBody)
+      .eq("id", payload.id)
+      .select()
+      .maybeSingle();
+
+    if (error || !data) {
+      // If no row updated (e.g., local/import carried a non-existent id), INSERT without id
+      const toInsert = { ...base };
+      delete toInsert.id;
+      toInsert.created_on = nowIso();
+      const ins = await supabase.from(table).insert(toInsert).select().single();
+      if (ins.error) throw ins.error;
+      return ins.data;
+    }
+    return data;
+  } else {
+    // INSERT path — never send id to IDENTITY ALWAYS column
+    const body = { ...base };
+    delete body.id;
+    body.created_on = nowIso();
+    const { data, error } = await supabase.from(table).insert(body).select().single();
+    if (error) throw error;
+    return data;
+  }
+}
+
+async function deleteRow(table, id){
+  ensureUser();
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+}
+
+function mapWorkUIToDB(r){
+  const out = { date:r.date, vendor:r.vendor||null,
+    expense:r.expense!=null?Number(r.expense):0,
+    pay_method:r.payMethod||"Credit Card", card_last4:r.cardLast4||null,
+    notes:r.notes||null, receipt_img:r.receiptImg||null };
+  if (r.id) out.id = r.id;
+  return out;
+}
+function mapFamilyUIToDB(r){
+  const out = { date:r.date||null, vendor:r.vendor||null,
+    expense:r.expense!=null?Number(r.expense):0,
+    pay_method:r.payMethod||"Credit Card", card_last4:r.cardLast4||null,
+    notes:r.notes||null, receipt_img:r.receiptImg||null };
+  if (r.id) out.id = r.id;
+  return out;
+}
+function mapWageUIToDB(r){
+  const out = { date:r.date, hours:r.hours?Number(r.hours):0,
+    amount:r.amount?Number(r.amount):0, method:r.method||"Cash", notes:r.notes||null };
+  if (r.id) out.id = r.id;
+  return out;
+}
+function mapReimbOnlyUIToDB(r){
+  const out = { date:r.date, amount:r.amount?Number(r.amount):0,
+    method:r.method||"Cash", notes:r.notes||null };
+  if (r.id) out.id = r.id;
+  return out;
+}
+
+function mapWorkDBToUI(r){
+  return { id:r.id, date:r.date, vendor:r.vendor, expense:r.expense ?? 0, payMethod:r.pay_method || "Credit Card",
+    cardLast4:r.card_last4, notes:r.notes, receiptImg:r.receipt_img,
+    receiptName:r.receipt_img ? r.receipt_img.split("/").pop() : "" };
+}
+function mapFamilyDBToUI(r){
+  return { id:r.id, date:r.date, vendor:r.vendor, expense:r.expense ?? 0, payMethod:r.pay_method || "Credit Card",
+    cardLast4:r.card_last4, notes:r.notes, receiptImg:r.receipt_img,
+    receiptName:r.receipt_img ? r.receipt_img.split("/").pop() : "" };
+}
+function mapWageDBToUI(r){ return { id:r.id, date:r.date, hours:r.hours ?? 0, amount:r.amount ?? 0, method:r.method || "Cash", notes:r.notes }; }
+function mapReimbOnlyDBToUI(r){ return { id:r.id, date:r.date, amount:r.amount ?? 0, method:r.method || "Cash", notes:r.notes }; }
+
+/* ===== DB-aware loading ===== */
+async function loadFromDBAndRender() {
+  if (!currentUser) { renderAll(); return; }
+  try {
+    const [w, g, r, h] = await Promise.all([
+      fetchRows(T_WAGES, "date"),
+      fetchRows(T_WORK, "date"),
+      fetchRows(T_REIMB, "date"),
+      fetchRows(T_FAMILY, "date"),
+    ]);
+    wagesRows      = w.map(mapWageDBToUI);
+    reimbRows      = g.map(mapWorkDBToUI);
+    reimbOnlyRows  = r.map(mapReimbOnlyDBToUI);
+    homeRows       = h.map(mapFamilyDBToUI);
+    saveAll();
+    renderAll();
+  } catch (e) {
+    console.error(e);
+    renderAll();
+  }
+}
+
+/* ===== Excel Export/Import ===== */
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  const wsWages = XLSX.utils.json_to_sheet(wagesRows);
+  XLSX.utils.book_append_sheet(wb, wsWages, "Wages");
+  const wsReimb = XLSX.utils.json_to_sheet(reimbRows);
+  XLSX.utils.book_append_sheet(wb, wsReimb, "Work");
+  const wsReimbOnly = XLSX.utils.json_to_sheet(reimbOnlyRows);
+  XLSX.utils.book_append_sheet(wb, wsReimbOnly, "Reimbursement");
+  const wsHome = XLSX.utils.json_to_sheet(homeRows);
+  XLSX.utils.book_append_sheet(wb, wsHome, "Family");
+  XLSX.writeFile(wb, "MoneyTracker.xlsx");
+}
+
+const LOG_KEY = "activityLog_v1";
+let activityLog = [];
+function logAction(action, details="") {
+  const entry = { time: new Date().toLocaleString(), action, details };
+  activityLog.push(entry);
+  try{ localStorage.setItem(LOG_KEY, JSON.stringify(activityLog)); }catch{}
+}
+function loadLog() {
+  try { activityLog = JSON.parse(localStorage.getItem(LOG_KEY) || "[]"); }
+  catch { activityLog = []; }
+}
+loadLog();
+
+function importExcel(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, { type: "array" });
+
+    wagesRows = []; reimbRows = []; reimbOnlyRows = []; homeRows = [];
+
+    if (wb.Sheets["Wages"]) wagesRows = XLSX.utils.sheet_to_json(wb.Sheets["Wages"]);
+    if (wb.Sheets["Work"]) reimbRows = XLSX.utils.sheet_to_json(wb.Sheets["Work"]);
+    if (wb.Sheets["Reimbursement"]) reimbOnlyRows = XLSX.utils.sheet_to_json(wb.Sheets["Reimbursement"]);
+    if (wb.Sheets["Family"]) homeRows = XLSX.utils.sheet_to_json(wb.Sheets["Family"]);
+
+    saveAll();
+    renderAll();
+    logAction("Import Excel", file.name);
+
+    (async () => {
+      if (!currentUser) return;
+      try {
+        // Strip id before pushing to DB to avoid 428C9 on IDENTITY ALWAYS columns
+        for (const r of wagesRows)      { const clean = { ...r }; delete clean.id; await upsertRow(T_WAGES,  mapWageUIToDB(clean)); }
+        for (const r of reimbRows)      { const clean = { ...r }; delete clean.id; await upsertRow(T_WORK,   mapWorkUIToDB(clean)); }
+        for (const r of reimbOnlyRows)  { const clean = { ...r }; delete clean.id; await upsertRow(T_REIMB,  mapReimbOnlyUIToDB(clean)); }
+        for (const r of homeRows)       { const clean = { ...r }; delete clean.id; await upsertRow(T_FAMILY, mapFamilyUIToDB(clean)); }
+        await loadFromDBAndRender();
+      } catch (e) { console.error("Import push failed:", e); }
+    })();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ===== Date-range filter (tables only) ===== */
+let filterStart = "";
+let filterEnd   = "";
+
+function inRange(isoDate) {
+  if (!isoDate) return false;
+  if (filterStart && isoDate < filterStart) return false;
+  if (filterEnd   && isoDate > filterEnd)   return false;
+  return true;
+}
+function applyDateFilter(rows, fieldName = "date") {
+  if (!filterStart && !filterEnd) return rows;
+  return rows.filter(r => inRange((r?.[fieldName]||"").toString().slice(0,10)));
+}
+function updateSectionTotals(){
+  const gSum = applyDateFilter(reimbRows, "date").reduce((a,b)=> a + (parseFloat(b.expense)||0), 0);
+  setText("groceryTotal", fmtAutoCurrency(gSum));
+
+  const rSum = applyDateFilter(reimbOnlyRows, "date").reduce((a,b)=> a + (parseFloat(b.amount)||0), 0);
+  setText("reimbOnlyTotal", fmtAutoCurrency(rSum));
+
+  const wSum = applyDateFilter(wagesRows, "date").reduce((a,b)=> a + (parseFloat(b.amount)||0), 0);
+  setText("wagesTotal", fmtAutoCurrency(wSum));
+
+  const hSum = applyDateFilter(homeRows, "date").reduce((a,b)=> a + (parseFloat(b.expense)||0), 0);
+  setText("homeTotal", fmtAutoCurrency(hSum));
+}
+function applyFilterAndRender(){
+  filterStart = byId("filterStart")?.value || "";
+  filterEnd   = byId("filterEnd")?.value   || "";
+  renderAll();
+}
+["change","input"].forEach(evt => {
+  byId("filterStart")?.addEventListener(evt, applyFilterAndRender);
+  byId("filterEnd")?.addEventListener(evt, applyFilterAndRender);
+});
+byId("clearDateFilter")?.addEventListener("click", () => {
+  filterStart = ""; filterEnd = "";
+  if (byId("filterStart")) byId("filterStart").value = "";
+  if (byId("filterEnd"))   byId("filterEnd").value   = "";
+  renderAll();
+});
+
+/* ===== Keyboard shortcuts in data-entry modals ===== */
+function bindEnterSubmit(modalId, submitBtnId){
+  const modal = byId(modalId);
+  const submit = byId(submitBtnId);
+  if(!modal || !submit) return;
+  modal.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      submit.click();
+    }
+    if(e.key === "Escape"){
+      e.preventDefault();
+      modal.classList.remove("open");
+    }
+  });
+}
+bindEnterSubmit("wagesModal", "addWagesRow");
+bindEnterSubmit("receiptModal", "addReceipt");
+bindEnterSubmit("reimbOnlyModal", "addReimbOnlyRowSubmit");
+bindEnterSubmit("familyModal", "addFamilySubmit");
+
+/* ===== Delete modal: Enter confirms, Esc cancels ===== */
+let deleteCtx = null;
+function openDeleteModal(ctx){
+  deleteCtx = ctx;
+  const modal = byId("confirmDeleteModal");
+  modal.classList.add("open");
+  const confirmBtn = byId("confirmDeleteBtn");
+  confirmBtn?.setAttribute("autofocus","true");
+  confirmBtn?.focus();
+}
+function closeDeleteModal(){
+  byId("confirmDeleteModal").classList.remove("open");
+  deleteCtx = null;
+}
+window.addEventListener("DOMContentLoaded", () => {
+  byId("closeConfirmDelete").onclick = closeDeleteModal;
+  byId("cancelDeleteBtn").onclick = closeDeleteModal;
+
+  byId("confirmDeleteBtn").onclick = async () => {
+    if (!deleteCtx) return;
+    const { type, index } = deleteCtx;
+
+    let delId = null;
+    if (type === "wages") delId = wagesRows[index]?.id;
+    if (type === "reimb") delId = reimbRows[index]?.id;
+    if (type === "reimbonly") delId = reimbOnlyRows[index]?.id;
+    if (type === "home") delId = homeRows[index]?.id;
+
+    if (type === "wages")      { wagesRows.splice(index, 1);      renderWages(); }
+    if (type === "reimb")      { reimbRows.splice(index, 1);      renderReimb(); }
+    if (type === "reimbonly")  { reimbOnlyRows.splice(index, 1);  renderReimbOnly(); }
+    if (type === "home")       { homeRows.splice(index, 1);       renderHome(); }
+
+    try {
+      if (currentUser && delId) {
+        const table = type === "wages" ? T_WAGES : type === "reimb" ? T_WORK : type === "reimbonly" ? T_REIMB : T_FAMILY;
+        await deleteRow(table, delId);
+      }
+    } catch (e) { console.error("DB delete failed:", e); }
+
+    saveAll();
+    closeDeleteModal();
+  };
+
+  document.addEventListener("keydown", (e)=>{
+    const isOpen = byId("confirmDeleteModal")?.classList.contains("open");
+    if (!isOpen) return;
+    if (e.key === "Enter"){ e.preventDefault(); byId("confirmDeleteBtn")?.click(); }
+    if (e.key === "Escape"){ e.preventDefault(); closeDeleteModal(); }
+  });
+});
+
+/* ===== Font ruler logic ===== */
+const fsSlider = $("#fsSlider"), fsDown=$("#fsDown"), fsUp=$("#fsUp");
+function applyScale(val){ document.documentElement.style.setProperty("--scale", (val/100).toString()); localStorage.setItem(SCALE_KEY, String(val)); }
+function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+fsSlider?.addEventListener("input", ()=> applyScale(+fsSlider.value));
+fsDown?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value-5, 60, 130); applyScale(+fsSlider.value); });
+fsUp?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value+5, 60, 130); applyScale(+fsSlider.value); });
+const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider")) { byId("fsSlider").value = clamp(savedScale,60,130); applyScale(+byId("fsSlider").value); }
+
+/* ===== Click handlers (CRUD wired) ===== */
+document.addEventListener("click",async (e)=>{
+  const t=e.target;
+
+  // Wages
+  if(t.id==="addWageRow") openWagesModal();
+  if(t.id==="closeWagesModal") $("#wagesModal").classList.remove("open");
+  if(t.id==="addWagesRow"){
+    if(!validate($("#wDate"))||!validate($("#wHours"))||!validate($("#wAmount"))||!validate($("#wMethod"))){return;}
+    const amountNorm = normMoney($("#wAmount").value);
+    if (amountNorm === null){ $("#wAmount").classList.add("mandatory-missing"); return; }
+    $("#wAmount").value = fmtAutoPlain(amountNorm);
+
+    const editIdx = $("#wagesModal").dataset.editIdx;
+    const existingId = editIdx!=="" ? wagesRows[+editIdx]?.id : undefined;
+    const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value};
+
+    if (currentUser) {
+      try { const saved = await upsertRow(T_WAGES, mapWageUIToDB(obj)); obj.id = saved.id; }
+      catch(e){ console.error(e); }
+    }
+
+    if(editIdx!=="") wagesRows[+editIdx]=obj; else wagesRows.push(obj);
+    renderWages(); saveAll(); $("#wagesModal").classList.remove("open");
+  }
+
+  // Work / Grocery
+  if(t.id==="btnEnterReceipt") openReceiptModal();
+  if(t.id==="closeReceiptModal") $("#receiptModal").classList.remove("open");
+  if(t.id==="attachReceiptBtn"){ byId("receiptFile").click(); }
+  if(t.id==="addReceipt"){
+    if(!validate($("#gDate"))||!validate($("#gVendor"))||!validate($("#gTotal"))||!validate($("#gPayMethod"))){return;}
+
+    const amt = normMoney($("#gTotal").value);
+    if (amt === null){ $("#gTotal").classList.add("mandatory-missing"); return; }
+    $("#gTotal").value = fmtAutoPlain(amt);
+
+    const method = $("#gPayMethod").value || "Credit Card";
+    if(method.includes("Card") && !validate($("#gCardLast4"))){return;}
+
+    const editIdx = $("#receiptModal").dataset.editIdx;
+    const existingId = editIdx!=="" ? reimbRows[+editIdx]?.id : undefined;
+
+    let receiptUrl = pendingReceiptImage;
+    if (currentUser && pendingReceiptImage) {
+      try { receiptUrl = await uploadReceiptToStorage(pendingReceiptImage, "work"); } catch (e) {}
+    }
+
+    const obj={ id: existingId,
+                date:$("#gDate").value,vendor:$("#gVendor").value,expense:amt,
+                payMethod:method,cardLast4:$("#gCardLast4").value,notes:$("#gNotes").value,
+                receiptImg: receiptUrl || null, receiptName: pendingReceiptName || ""};
+
+    if (currentUser) {
+      try { const saved = await upsertRow(T_WORK, mapWorkUIToDB(obj)); obj.id = saved.id; }
+      catch(e){ console.error(e); }
+    }
+
+    if(editIdx!=="") reimbRows[+editIdx]=obj; else reimbRows.push(obj);
+    pendingReceiptImage = null; pendingReceiptName = "";
+    renderReimb(); saveAll(); $("#receiptModal").classList.remove("open");
+  }
+
+  // Reimbursement only
+  if(t.id==="addReimbOnlyRow") openReimbOnlyModal();
+  if(t.id==="closeReimbOnlyModal") $("#reimbOnlyModal").classList.remove("open");
+  if(t.id==="addReimbOnlyRowSubmit"){
+    if(!validate($("#rDate"))||!validate($("#rAmount"))||!validate($("#rMethod"))){return;}
+    const amt = normMoney($("#rAmount").value);
+    if (amt === null){ $("#rAmount").classList.add("mandatory-missing"); return; }
+    $("#rAmount").value = fmtAutoPlain(amt);
+
+    const editIdx = $("#reimbOnlyModal").dataset.editIdx;
+    const existingId = editIdx!=="" ? reimbOnlyRows[+editIdx]?.id : undefined;
+    const obj={ id: existingId, date:$("#rDate").value,amount:amt,method:$("#rMethod").value||"Cash",notes:$("#rNotes").value };
+
+    if (currentUser) {
+      try { const saved = await upsertRow(T_REIMB, mapReimbOnlyUIToDB(obj)); obj.id = saved.id; }
+      catch(e){ console.error(e); }
+    }
+
+    if(editIdx!=="") reimbOnlyRows[+editIdx]=obj; else reimbOnlyRows.push(obj);
+    renderReimbOnly(); saveAll(); $("#reimbOnlyModal").classList.remove("open");
+  }
+
+  // Family
+  if(t.id==="addFamilyRow") openFamilyModal();
+  if(t.id==="closeFamilyModal") $("#familyModal").classList.remove("open");
+  if(t.id==="attachFamilyBtn"){ byId("familyFile").click(); }
+  if(t.id==="addFamilySubmit"){
+    if(!validate($("#fDate"))||!validate($("#fVendor"))||!validate($("#fTotal"))||!validate($("#fPayMethod"))){return;}
+
+    const amt = normMoney($("#fTotal").value);
+    if (amt === null){ $("#fTotal").classList.add("mandatory-missing"); return; }
+    $("#fTotal").value = fmtAutoPlain(amt);
+
+    const method = $("#fPayMethod").value || "Credit Card";
+    if(method.includes("Card") && !validate($("#fCardLast4"))){return;}
+
+    const editIdx = $("#familyModal").dataset.editIdx;
+    const existingId = editIdx!=="" ? homeRows[+editIdx]?.id : undefined;
+
+    let receiptUrl = pendingFamilyImage;
+    if (currentUser && pendingFamilyImage) {
+      try { receiptUrl = await uploadReceiptToStorage(pendingFamilyImage, "family"); } catch (e) {}
+    }
+
+    const obj={ id: existingId,
+                date:$("#fDate").value,vendor:$("#fVendor").value,expense:amt,
+                payMethod:method,cardLast4:$("#fCardLast4").value,notes:$("#fNotes").value,
+                receiptImg: receiptUrl || null, receiptName: pendingFamilyName || "" };
+
+    if (currentUser) {
+      try { const saved = await upsertRow(T_FAMILY, mapFamilyUIToDB(obj)); obj.id = saved.id; }
+      catch(e){ console.error(e); }
+    }
+
+    if(editIdx!=="") homeRows[+editIdx]=obj; else homeRows.push(obj);
+    pendingFamilyImage = null; pendingFamilyName = "";
+    renderHome(); saveAll(); $("#familyModal").classList.remove("open");
+  }
+
+  // Edit via modals
+  if(t.closest(".edit-wages")){ const b=t.closest(".edit-wages"); openWagesModal(+b.dataset.i); }
+  if(t.closest(".edit-reimb")){ const b=t.closest(".edit-reimb"); openReceiptModal(+b.dataset.i); }
+  if(t.closest(".edit-home")) { const b=t.closest(".edit-home");  openFamilyModal(+b.dataset.i); }
+  if(t.closest(".edit-reimbonly")){ const b=t.closest(".edit-reimbonly"); openReimbOnlyModal(+b.dataset.i); }
+
+  // Delete (custom modal)
+  const delBtn = t.closest("button[data-act='del']");
+  if (delBtn) openDeleteModal({ type: delBtn.dataset.type, index: +delBtn.dataset.i });
+
+  // Attachment: view/add (table button)
+  if(t.closest(".view-attachment")){
+    const btn = t.closest(".view-attachment");
+    const i = +btn.dataset.i;
+    const type = btn.dataset.type || "reimb";
+    const srcRow = type==="home" ? homeRows[i] : reimbRows[i];
+    if(srcRow && srcRow.receiptImg){
+      $("#previewImg").src = cleanAttachmentUrl(srcRow.receiptImg);
+      $("#receiptPreviewModal").classList.add("open");
+    }
+  }
+  if(t.closest(".add-attachment")){
+    const btn = t.closest(".add-attachment");
+    const i = +btn.dataset.i;
+    const type = btn.dataset.type || "reimb";
+    const fileInput = document.createElement("input");
+    fileInput.type="file"; fileInput.accept="image/*";
+    fileInput.onchange=async e=>{
+      const f=e.target.files?.[0];
+      if(f){
+        let urlOrBase64 = await uploadReceiptToStorage(
+          f,
+          type === "home" ? "family" : "work"
+        );
+        if(type==="home"){
+          homeRows[i].receiptImg = urlOrBase64;
+          homeRows[i].receiptName = f.name;
+          // Only DB write if row already has an id (prevents 428C9)
+          if (currentUser && homeRows[i]?.id) {
+            try { await upsertRow(T_FAMILY, mapFamilyUIToDB(homeRows[i])); } catch(e){ console.error(e); }
+          }
+          saveAll(); renderHome();
+        }else{
+          reimbRows[i].receiptImg = urlOrBase64;
+          reimbRows[i].receiptName = f.name;
+          if (currentUser && reimbRows[i]?.id) {
+            try { await upsertRow(T_WORK, mapWorkUIToDB(reimbRows[i])); } catch(e){ console.error(e); }
+          }
+          saveAll(); renderReimb();
+        }
+      }
+    };
+    fileInput.click();
+  }
+
+  // Close preview modal (button or clicking backdrop)
+  if (t.id === "closePreviewModal" || (t.id === "receiptPreviewModal" && t.classList.contains("open"))) {
+    byId("receiptPreviewModal").classList.remove("open");
+  }
+});
+
+/* ===== NEW: Modal file input change listeners to make Upload buttons work ===== */
+byId("receiptFile")?.addEventListener("change", async (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  let urlOrBase64 = await uploadReceiptToStorage(f, "work");
+  pendingReceiptImage = urlOrBase64;
+  pendingReceiptName  = f.name;
+  byId("attachReceiptBtn")?.replaceChildren(`${langStrings[currentLang].upload} (${pendingReceiptName})`);
+});
+byId("familyFile")?.addEventListener("change", async (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  let urlOrBase64 = await uploadReceiptToStorage(f, "family");
+  pendingFamilyImage = urlOrBase64;
+  pendingFamilyName  = f.name;
+  byId("attachFamilyBtn")?.replaceChildren(`${langStrings[currentLang].upload} (${pendingFamilyName})`);
+});
+
+/* ===== Row click to open attachment (if present) ===== */
+function rowClickOpener(tbodyId, rowsArr, type){
+  const tb = byId(tbodyId);
+  if (!tb) return;
+  tb.addEventListener("click",(e)=>{
+    const target = e.target;
+    if (target.closest("button") || target.closest(".icon-btn") || target.tagName === "SVG" || target.tagName === "PATH") return;
+    const tr = target.closest("tr");
+    if (!tr) return;
+    const i = +tr.dataset.i;
+    const row = rowsArr[i];
+    if (row && row.receiptImg){
+      $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
+      $("#receiptPreviewModal").classList.add("open");
+    }
+  });
+}
+rowClickOpener("reimbBody", reimbRows, "reimb");
+
+function enhancedRowClickFallback(rowsArr, i){
+  const row = rowsArr[i];
+  if (row && row.receiptImg){
+    $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
+    $("#receiptPreviewModal").classList.add("open");
+    return true;
+  }
+  return false;
+}
+// Rebind click handlers to be more defensive and ensure preview on row click
+(function(){
+  function bind(defTbodyId, arr){
+    const tb = byId(defTbodyId);
+    if (!tb) return;
+    tb.addEventListener("click",(e)=>{
+      const target = e.target;
+      if (target.closest("button") || target.closest(".icon-btn") || target.tagName === "SVG" || target.tagName === "PATH") return;
+      const tr = target.closest("tr");
+      if (!tr) return;
+      const i = +tr.dataset.i;
+      const has = tr.dataset.hasAttachment === "true";
+      if (has){
+        if (!enhancedRowClickFallback(arr, i)){
+          // Fallback: try to read from row element if an inline src was ever placed (future-proof)
+          const src = tr.getAttribute("data-receipt-src");
+          if (src){
+            $("#previewImg").src = cleanAttachmentUrl(src);
+            $("#receiptPreviewModal").classList.add("open");
+          }
+        }
+      }
+    });
+  }
+  bind("reimbBody", reimbRows);
+  bind("homeBody",  homeRows);
+})();
+
+rowClickOpener("homeBody", homeRows, "home");
+
+// Also allow clicking backdrop to close preview
+byId("receiptPreviewModal")?.addEventListener("click",(e)=>{
+  if (e.target.id === "receiptPreviewModal") e.currentTarget.classList.remove("open");
+});
+// ESC key closes preview
+document.addEventListener("keydown",(e)=>{
+  if (e.key === "Escape" && byId("receiptPreviewModal")?.classList.contains("open")) {
+    byId("receiptPreviewModal").classList.remove("open");
+  }
+});
+
+/* ===== Open/Close Modals ===== */
+function openWagesModal(editIdx = null){
+  $("#wagesModal").classList.add("open");
+  const seed = editIdx!=null ? wagesRows[editIdx] : {};
+  $("#wDate").value   = seed?.date   || today();
+  $("#wHours").value  = seed?.hours  ?? "";
+  $("#wAmount").value = fmtAutoPlain(seed?.amount ?? "0");
+  $("#wMethod").value = seed?.method || "Cash";
+  $("#wNotes").value  = seed?.notes  || "";
+  $("#wagesModal").dataset.editIdx = editIdx!=null ? editIdx : "";
+}
+
+function openReceiptModal(editIdx = null){
+  $("#receiptModal").classList.add("open");
+  const seed = editIdx!=null ? reimbRows[editIdx] : {};
+  $("#gDate").value       = seed?.date      || today();
+  $("#gVendor").value     = seed?.vendor    || "";
+  $("#gTotal").value      = fmtAutoPlain(seed?.expense ?? "0");
+  $("#gPayMethod").value  = seed?.payMethod || "Credit Card";
+  $("#gCardLast4").value  = seed?.cardLast4 || "";
+  $("#gNotes").value      = seed?.notes     || "";
+  $("#receiptModal").dataset.editIdx = editIdx!=null ? editIdx : "";
+
+  pendingReceiptImage = seed?.receiptImg || null;
+  pendingReceiptName  = seed?.receiptName || "";
+  const label = pendingReceiptName ? `${langStrings[currentLang].upload} (${pendingReceiptName})`
+                                   : langStrings[currentLang].upload;
+  byId("attachReceiptBtn")?.replaceChildren(label);
+}
+
+function openFamilyModal(editIdx = null){
+  $("#familyModal").classList.add("open");
+  const seed = editIdx!=null ? homeRows[editIdx] : {};
+  $("#fDate").value      = seed?.date      || today();
+  $("#fVendor").value    = seed?.vendor    || "";
+  $("#fTotal").value     = fmtAutoPlain(seed?.expense ?? "0");
+  $("#fPayMethod").value = seed?.payMethod || "Credit Card";
+  $("#fCardLast4").value  = seed?.cardLast4 || "";
+  $("#fNotes").value     = seed?.notes     || "";
+  $("#familyModal").dataset.editIdx = editIdx!=null ? editIdx : "";
+
+  pendingFamilyImage = seed?.receiptImg || null;
+  pendingFamilyName  = seed?.receiptName || "";
+  const label = pendingFamilyName ? `${langStrings[currentLang].upload} (${pendingFamilyName})`
+                                  : langStrings[currentLang].upload;
+  byId("attachFamilyBtn")?.replaceChildren(label);
+}
+
+
+function openReimbOnlyModal(editIdx = null){
+  $("#reimbOnlyModal").classList.add("open");
+  const seed = editIdx!=null ? reimbOnlyRows[editIdx] : {};
+  $("#rDate").value   = seed?.date   || today();
+  $("#rAmount").value = fmtAutoPlain(seed?.amount ?? "0");
+  $("#rMethod").value = seed?.method || "Cash";
+  $("#rNotes").value  = seed?.notes  || "";
+  $("#reimbOnlyModal").dataset.editIdx = editIdx!=null ? editIdx : "";
+}
+
+// --- Robust Enter-to-submit for Reimbursement modal ---
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    const m = byId("reimbOnlyModal");
+    if (m && m.classList.contains("open")) {
+      e.preventDefault();
+      byId("addReimbOnlyRowSubmit")?.click();
+    }
+  }
+});
+
+/* ===== OCR helpers ===== */
+async function ocrFile(file){
+  if(!window.Tesseract){ return ""; }
+  const {data:{text}}=await Tesseract.recognize(file,'eng');
+  return text||"";
+}
+function parseReceiptText(txt){
+  const moneyPattern = /(?:\$)?\d+(?:\.\d{2})?/g;
+  const lines=txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  let date="",store="",total="";
+  const dateRxs=[/\b(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})\b/,/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/];
+  for(const rx of dateRxs){const m=txt.match(rx); if(m){date=m[0];break;}}
+  store = lines.find(s=>!s.match(/total/i)&&s.replace(/[^a-z]/ig,"").length>1) || "";
+  for(const l of lines){if(/\btotal\b/i.test(l)){const m=l.match(moneyPattern); if(m){total=m[m.length-1].replace(/[^0-9.]/g,""); break;}}}
+  if(!total){
+    const amts=[...txt.matchAll(moneyPattern)].map(m=>m[0].replace(/[^0-9.]/g,""));
+    if(amts.length) total = amts.map(Number).sort((a,b)=>b-a)[0].toFixed(2);
+  }
+  return {date,store,total};
+}
+function fileToDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ===== Clean attachment URL to remove trailing '=m' or query ===== */
+function cleanAttachmentUrl(u){
+  if (!u || typeof u !== "string") return u;
+  if (u.startsWith("data:")) return u;
+  let url = u.split("#")[0];
+  url = url.replace(/=m\d*$/i, "").replace(/=s\d+$/i, "");
+  url = url.split("?")[0];
+  return url;
+}
+
+/* ===== Init ===== */
+document.getElementById("langSwitch").value="en";
+setLang("en");
+loadAll();
+
+// Toolbar buttons
+document.getElementById("exportExcel").addEventListener("click", exportExcel);
+document.getElementById("importBtn").addEventListener("click", ()=> byId("importExcel").click());
+document.getElementById("importExcel").addEventListener("change", e=>{
+  const f = e.target.files?.[0]; if(f) importExcel(f);
+});
+
+(async () => {
+  await getSessionUser();
+  toggleUI();
+  if (currentUser) await loadFromDBAndRender();
+  preflightStorage();
+})();
+</script>
+
+<!-- Delete confirmation modal -->
+<div class="modal" id="confirmDeleteModal" role="dialog" aria-modal="true">
+  <div class="panel">
+    <div class="card-header">
+      <div class="card-title"><strong id="confirmDeleteTitle">Confirm Delete</strong></div>
+      <div class="actions"><button class="btn warn sm" id="closeConfirmDelete">✕</button></div>
+    </div>
+    <p id="confirmDeleteMsg" style="margin:10px 0; color:var(--ink)">Are you sure you want to delete this row?</p>
+    <div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px">
+      <button class="btn" id="cancelDeleteBtn">Cancel</button>
+      <button class="btn warn" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
