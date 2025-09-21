@@ -156,7 +156,38 @@
     .stat .label{color:var(--muted); font-size:calc(.85rem * var(--scale)); line-height:1.1}
     .stat .label .short{display:none}
     .stat .value{font-weight:900; font-size:calc(1.2rem * var(--scale))}
-    @media(max-width:520px){ .stat .label .full{display:none} .stat .label .short{display:inline} }
+    @media(max-width:520px){ 
+      .stat .label .full{display:none} 
+      .stat .label .short{display:inline}
+      
+      /* Improve modal panel on mobile */
+      .panel {
+        min-width: 320px;
+        max-width: 95vw;
+        margin: 16px;
+        padding: 12px;
+      }
+      
+      /* Improve form grid centering on mobile */
+      .form-grid {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 8px;
+        box-sizing: border-box;
+        gap: 6px 8px;
+      }
+      
+      .form-grid input, .form-grid select {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+      
+      .form-grid label {
+        justify-content: flex-start;
+        text-align: left;
+      }
+    }
 
     .sheet-viewport{
       border:1px solid var(--border);
@@ -257,16 +288,6 @@
       width:auto; min-width:400px; max-width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
       border:1px solid var(--border); border-radius:16px; padding:14px; box-shadow:0 10px 26px rgba(0,0,0,.2)
     }
-    
-    /* Mobile responsive modal panels */
-    @media(max-width:600px){
-      .panel{
-        min-width:280px;
-        max-width:95vw;
-        padding:12px;
-        margin:8px;
-      }
-    }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
     
@@ -277,25 +298,6 @@
     .form-grid .full-width{grid-column:1 / -1;}
     .form-grid .full-width input{width:100%; max-width:100%;}
     .form-grid .upload-btn{justify-self:start; width:auto; max-width:none;}
-    
-    /* Mobile responsive form layout */
-    @media(max-width:600px){
-      .form-grid{
-        grid-template-columns:1fr;
-        max-width:300px;
-        gap:6px;
-        padding:0 16px;
-      }
-      .form-grid label{
-        justify-content:flex-start;
-        text-align:left;
-        font-size:0.9em;
-      }
-      .form-grid input, .form-grid select{
-        width:100%;
-        max-width:100%;
-      }
-    }
 
     /* Loading styles */
     .loading-overlay {
@@ -319,31 +321,6 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 20px;
-      margin: auto;
-    }
-    
-    /* Mobile-specific loading positioning */
-    @media(max-width:600px){
-      .loading-overlay {
-        /* Ensure it covers the entire viewport on mobile */
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .loading-content {
-        position: relative;
-        transform: none;
-        margin: 0;
-        padding: 16px;
-      }
     }
     .loading-spinner {
       width: 50px;
@@ -681,7 +658,7 @@
         <span class="arrow">→</span>
         <input type="date" id="filterEnd" title="End date">
         <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
-        <span class="version-badge">v3.7</span>
+        <span class="version-badge">v3.5</span>
       </div>
 
       <!-- WORK -->
@@ -1427,7 +1404,7 @@ async function safeSubmit(modalId, buttonId, submitFunction) {
     await submitFunction();
     endSubmission(modalId, buttonId, true);
   } catch (error) {
-    console.error("Submission error:", error);
+    console.error("Submission error occurred");
     
     // Provide more specific error messages
     let errorMessage = "Submission failed";
@@ -1866,14 +1843,14 @@ async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
   try {
     const { data, error } = await supabase.storage.from("receipts").upload(path, blob, { upsert: false });
     if (error) {
-      console.error("Storage upload error:", error);
+      console.error("Storage upload error occurred");
       return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
     }
 
     const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
     return pub.publicUrl;
   } catch (e) {
-    console.error("Storage upload failed:", e);
+    console.error("Storage upload failed");
     return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
   }
 }
@@ -1891,11 +1868,10 @@ function ensureUser(){ if (!currentUser) throw new Error("No signed-in user. DB 
 async function fetchRows(table, dateField="date"){
   ensureUser();
   
-  // Optimized query with user isolation and better ordering
+  // Optimized query with better ordering and potential limits
   let q = supabase
     .from(table)
     .select("*")
-    .eq("user_id", currentUser.id) // ← CRITICAL: Only fetch current user's data
     .order(dateField, { ascending: false }) // Recent first is often faster
     .order("id", { ascending: false }); // Secondary sort for consistency
     
@@ -1946,12 +1922,7 @@ async function upsertRow(table, payload){
 
 async function deleteRow(table, id){
   ensureUser();
-  // CRITICAL: Only allow deleting rows that belong to current user
-  const { error } = await supabase
-    .from(table)
-    .delete()
-    .eq("id", id)
-    .eq("user_id", currentUser.id); // ← Prevent deleting other users' data
+  const { error } = await supabase.from(table).delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -2019,7 +1990,7 @@ async function loadFromDBAndRender() {
         console.log(`Loaded ${tableName}: ${result.length} rows in ${tableTime.toFixed(0)}ms`);
         return result;
       } catch (error) {
-        console.warn(`Failed to load ${tableName}:`, error);
+        console.warn(`Failed to load ${tableName}`);
         
         // Check for network connectivity issues
         if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
@@ -2054,7 +2025,7 @@ async function loadFromDBAndRender() {
     hideLoading();
     updateConnectionStatus("online");
   } catch (e) {
-    console.error("Error loading data:", e);
+    console.error("Error loading data");
     hideLoading();
     updateConnectionStatus("offline");
     // Still render with whatever data we have locally
@@ -2130,7 +2101,7 @@ function importExcel(file) {
         for (const r of reimbOnlyRows)  { const clean = { ...r }; delete clean.id; await upsertRow(T_REIMB,  mapReimbOnlyUIToDB(clean)); }
         for (const r of homeRows)       { const clean = { ...r }; delete clean.id; await upsertRow(T_FAMILY, mapFamilyUIToDB(clean)); }
         await loadFromDBAndRender();
-      } catch (e) { console.error("Import push failed:", e); }
+      } catch (e) { console.error("Import push failed"); }
     })();
   };
   reader.readAsArrayBuffer(file);
@@ -2294,7 +2265,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const table = type === "wages" ? T_WAGES : type === "reimb" ? T_WORK : type === "reimbonly" ? T_REIMB : T_FAMILY;
         await deleteRow(table, delId);
       }
-    } catch (e) { console.error("DB delete failed:", e); }
+    } catch (e) { console.error("DB delete failed"); }
 
     saveAll();
     closeDeleteModal();
@@ -2532,14 +2503,14 @@ document.addEventListener("click",async (e)=>{
           homeRows[i].receiptName = f.name;
           // Only DB write if row already has an id (prevents 428C9)
           if (currentUser && homeRows[i]?.id) {
-            try { await upsertRow(T_FAMILY, mapFamilyUIToDB(homeRows[i])); } catch(e){ console.error(e); }
+            try { await upsertRow(T_FAMILY, mapFamilyUIToDB(homeRows[i])); } catch(e){ console.error("Upsert failed"); }
           }
           saveAll(); renderHome();
         }else{
           reimbRows[i].receiptImg = urlOrBase64;
           reimbRows[i].receiptName = f.name;
           if (currentUser && reimbRows[i]?.id) {
-            try { await upsertRow(T_WORK, mapWorkUIToDB(reimbRows[i])); } catch(e){ console.error(e); }
+            try { await upsertRow(T_WORK, mapWorkUIToDB(reimbRows[i])); } catch(e){ console.error("Upsert failed"); }
           }
           saveAll(); renderReimb();
         }
@@ -2803,7 +2774,7 @@ async function migrateLegacyImagePaths() {
   // Check if migration has already been run for this user
   const migrationKey = `migration_completed_${currentUser.id}`;
   if (localStorage.getItem(migrationKey)) {
-    console.log("Legacy image path migration already completed");
+    console.log("Legacy image path migration already completed for this user");
     return;
   }
   
@@ -2842,9 +2813,9 @@ async function migrateLegacyImagePaths() {
               .eq('id', record.id);
             
             if (updateError) {
-              console.warn(`Failed to update ${table} record:`, updateError);
+              console.warn(`Failed to update ${table} record ${record.id}:`, updateError);
             } else {
-              console.log(`Updated ${table} record path`);
+              console.log(`Updated ${table} record ${record.id} path`);
               totalUpdated++;
             }
           }
@@ -2858,7 +2829,7 @@ async function migrateLegacyImagePaths() {
     localStorage.setItem(migrationKey, 'true');
     
   } catch (e) {
-    console.error("Error during legacy image path migration:", e);
+    console.error("Error during legacy image path migration");
   }
 }
 
@@ -2933,7 +2904,7 @@ async function displayReceiptImage(receiptImg) {
     
     previewImg.src = imageUrl;
   } catch (e) {
-    console.error("Error displaying receipt image:", e);
+    console.error("Error displaying receipt image");
     previewImg.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NS41IDc1QzQ3LjUgNzUgMTcuNSA0NSAxNy41IDQ1SDE3NS41QzE3NS41IDQ1IDE0NS41IDc1IDEwNy41IDc1SDE3NS41VjEyMEgxNy41Vjc1SDg1LjVaIiBmaWxsPSIjRDFENTk5Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjYwIiByPSIxNSIgZmlsbD0iI0Q5RDlEOSIvPgo8dGV4dCB4PSI1MCUiIHk9IjkwIiBmaWxsPSIjNjc3Mjg5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K";
     showErrorNotification("Failed to load receipt image");
   }
@@ -2952,9 +2923,9 @@ document.getElementById("importExcel").addEventListener("change", e=>{
 });
 
 (async () => {
-  console.log("🚀 Money Tracker v3.7 - Application Starting");
+  console.log("🚀 Money Tracker v3.5 - Application Starting");
   console.log("📅 Build Date:", new Date().toISOString());
-  console.log("🔧 Features: Enhanced RLS Security, User Data Isolation, Image Migration, Enhanced UI, Optimized Base64 with Compression");
+  console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Optimized Base64 with Compression");
   
   await getSessionUser();
   console.log("🔐 Authentication check completed");
@@ -2963,7 +2934,7 @@ document.getElementById("importExcel").addEventListener("change", e=>{
   if (currentUser) await loadFromDBAndRender();
   preflightStorage();
   
-  console.log("✅ Money Tracker v3.7 - Application Ready");
+  console.log("✅ Money Tracker v3.5 - Application Ready");
 })();
 </script>
 
