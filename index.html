@@ -134,15 +134,28 @@
     @media(max-width:520px){ .stat .label .full{display:none} .stat .label .short{display:inline} }
 
     .sheet-viewport{
-  
       border:1px solid var(--border);
       border-radius:12px;
       overflow:auto;
       background:#fbfcff;
-      scrollbar-width:none; -ms-overflow-style:none;
-      max-height: calc(var(--header-h) + (var(--row-h) * 3));
+      min-height: calc(var(--header-h) + (var(--row-h) * 3));
+      max-height: calc(var(--header-h) + (var(--row-h) * 4));
     }
-    .sheet-viewport::-webkit-scrollbar{ width:0; height:0; }
+    .sheet-viewport::-webkit-scrollbar{ 
+      width: 8px; 
+      height: 8px; 
+    }
+    .sheet-viewport::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    .sheet-viewport::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    .sheet-viewport::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
 
     table{ width:100%; border-collapse:collapse; background:#fbfcff; table-layout:auto; }
 
@@ -317,6 +330,170 @@
     .header-filters .arrow{ opacity:.7; }
     .header-filters .clear-btn{ background:#eef2f9; border:1px solid var(--border); color:#000; }
     .version-badge{ font-size:calc(0.75rem * var(--scale)); color:#ffffff; font-weight:bold; background:#e74c3c; padding:2px 6px; border-radius:4px; text-shadow:0 1px 1px rgba(0,0,0,0.3); margin-left:auto; }
+
+    /* Delete modal styles */
+    .delete-modal-panel {
+      min-width: 400px;
+      max-width: 600px;
+      width: auto;
+    }
+    .delete-modal-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      padding: 8px 0;
+    }
+    .delete-modal-content p {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1.1em;
+    }
+    .delete-row-details {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      width: auto;
+      max-width: 500px;
+      min-width: 200px;
+      display: none;
+      text-align: left;
+    }
+    .delete-row-data {
+      font-family: monospace;
+      font-size: 1.1em;
+      color: var(--muted);
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      line-height: 1.2;
+      margin: 0;
+      padding: 0;
+      height: auto;
+      min-height: 0;
+      width: auto;
+      display: inline-block;
+    }
+    .delete-modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .delete-modal-actions .btn.warn {
+      background: #e74c3c;
+      color: #000;
+      border: 1px solid #c0392b;
+    }
+    .delete-modal-actions .btn.warn:hover {
+      background: #c0392b;
+      color: #000;
+    }
+    .btn.good {
+      background: #27ae60;
+      color: #000;
+      border: 1px solid #229954;
+    }
+    .btn.good:hover {
+      background: #229954;
+      color: #000;
+    }
+    
+    /* Processing states */
+    .btn.processing {
+      opacity: 0.7;
+      pointer-events: none;
+      position: relative;
+    }
+    .btn.processing::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Error notification */
+    .error-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10000;
+      max-width: 300px;
+      font-size: 14px;
+      line-height: 1.4;
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    .error-notification.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .error-notification .retry-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-size: 12px;
+      display: block;
+      width: 100%;
+    }
+    .error-notification .retry-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    /* Row highlight animation */
+    .row-highlight {
+      animation: flashHighlight 2s ease-in-out;
+    }
+    @keyframes flashHighlight {
+      0% { background-color: transparent; }
+      25% { background-color: #ffff00; opacity: 0.9; }
+      50% { background-color: transparent; }
+      75% { background-color: #ffff00; opacity: 0.7; }
+      100% { background-color: transparent; }
+    }
+    
+    /* Empty placeholder rows styling */
+    .empty-row {
+      opacity: 0.5;
+      height: var(--row-h);
+    }
+    .empty-row td {
+      height: var(--row-h);
+      color: #ccc;
+      text-align: center;
+    }
+    .empty-row:hover {
+      opacity: 0.7;
+      background-color: #f8f9fa;
+    }
+    .placeholder-row {
+      height: var(--row-h);
+    }
+    .placeholder-row td {
+      height: var(--row-h);
+    }
   </style>
 </head>
 <body>
@@ -401,7 +578,7 @@
         <span class="arrow">→</span>
         <input type="date" id="filterEnd" title="End date">
         <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
-        <span class="version-badge">v1.5</span>
+        <span class="version-badge">v2.6</span>
       </div>
 
       <!-- WORK -->
@@ -413,7 +590,7 @@
             <span class="section-total" id="groceryTotal">0</span>
           </div>
           <div class="actions">
-            <button class="btn good sm" id="btnEnterReceipt" title="Add Receipt">＋</button>
+            <button class="btn good sm" id="btnEnterReceipt" title="Add Receipt">Add</button>
           </div>
         </div>
         <div class="sheet-viewport">
@@ -433,7 +610,7 @@
             <span class="section-total" id="reimbOnlyTotal">0</span>
           </div>
           <div class="actions">
-            <button class="btn good sm" id="addReimbOnlyRow" title="Add Reimbursement">＋</button>
+            <button class="btn good sm" id="addReimbOnlyRow" title="Add Reimbursement">Add</button>
           </div>
         </div>
         <div class="sheet-viewport">
@@ -453,7 +630,7 @@
             <span class="section-total" id="wagesTotal">0</span>
           </div>
           <div class="actions">
-            <button class="btn good sm" id="addWageRow" title="Add Wage">＋</button>
+            <button class="btn good sm" id="addWageRow" title="Add Wage">Add</button>
           </div>
         </div>
         <div class="sheet-viewport">
@@ -473,7 +650,7 @@
             <span class="section-total" id="homeTotal">0</span>
           </div>
           <div class="actions">
-            <button class="btn good sm" id="addFamilyRow" title="Add Family Transaction">＋</button>
+            <button class="btn good sm" id="addFamilyRow" title="Add Family Transaction">Add</button>
           </div>
         </div>
         <div class="sheet-viewport">
@@ -811,6 +988,7 @@ const langStrings = {
     submit: "Submit",
     signOut: "Sign out",
     clear: "Clear",
+    add: "Add",
     multiDeviceWarning: "⚠️ Notice: Using the same login on multiple devices simultaneously may cause data synchronization issues. Please sign out from other devices before logging in here.",
     cash: "Cash", check: "Check", zelle: "Zelle", other: "Other",
     creditCard: "Credit Card", debitCard: "Debit Card"
@@ -833,6 +1011,7 @@ const langStrings = {
     submit: "Gửi",
     signOut: "Đăng xuất",
     clear: "Xóa",
+    add: "Thêm",
     multiDeviceWarning: "⚠️ Lưu ý: Sử dụng cùng một tài khoản trên nhiều thiết bị cùng lúc có thể gây ra lỗi đồng bộ dữ liệu. Vui lòng đăng xuất khỏi các thiết bị khác trước khi đăng nhập tại đây.",
     cash: "Tiền mặt", check: "Séc", zelle: "Zelle", other: "Khác",
     creditCard: "Thẻ tín dụng", debitCard: "Thẻ ghi nợ"
@@ -890,6 +1069,12 @@ function setLang(code){
   byId("addReceipt")?.replaceChildren(t.submit);
   byId("addReimbOnlyRowSubmit")?.replaceChildren(t.submit);
   byId("addFamilySubmit")?.replaceChildren(t.submit);
+
+  // Add buttons
+  byId("btnEnterReceipt")?.replaceChildren(t.add);
+  byId("addReimbOnlyRow")?.replaceChildren(t.add);
+  byId("addWageRow")?.replaceChildren(t.add);
+  byId("addFamilyRow")?.replaceChildren(t.add);
 
   // Update select options
   updateSelectOptions();
@@ -1001,12 +1186,12 @@ function setButtonLoading(buttonId, isLoading) {
   if (!btn) return;
   
   if (isLoading) {
-    btn.classList.add("loading");
+    btn.classList.add("processing");
     btn.disabled = true;
     btn.dataset.originalText = btn.textContent;
     btn.textContent = "";
   } else {
-    btn.classList.remove("loading");
+    btn.classList.remove("processing");
     btn.disabled = false;
     if (btn.dataset.originalText) {
       btn.textContent = btn.dataset.originalText;
@@ -1040,11 +1225,15 @@ function endSubmission(modalId, buttonId, success = true) {
   if (modal) modal.classList.remove("processing");
   
   if (!success) {
-    showErrorNotification("Submission failed. Please try again.");
+    showErrorNotification("Submission failed. Please try again.", () => {
+      // Retry by clicking the button again
+      const btn = byId(buttonId);
+      if (btn) btn.click();
+    });
   }
 }
 
-function showErrorNotification(message) {
+function showErrorNotification(message, retryCallback = null) {
   // Remove any existing notifications
   const existing = document.querySelector(".error-notification");
   if (existing) existing.remove();
@@ -1052,16 +1241,50 @@ function showErrorNotification(message) {
   // Create new notification
   const notification = document.createElement("div");
   notification.className = "error-notification";
-  notification.textContent = message;
+  notification.innerHTML = `
+    <div>${message}</div>
+    ${retryCallback ? '<button class="retry-btn">Try Again</button>' : ''}
+  `;
+  
+  if (retryCallback) {
+    const retryBtn = notification.querySelector('.retry-btn');
+    retryBtn.onclick = () => {
+      notification.remove();
+      retryCallback();
+    };
+  }
+  
   document.body.appendChild(notification);
   
-  // Auto-remove after 5 seconds
+  // Trigger animation
+  setTimeout(() => notification.classList.add('show'), 50);
+  
+  // Auto-remove after 8 seconds (longer for retry option)
   setTimeout(() => {
     if (notification.parentNode) {
-      notification.classList.add("hide");
+      notification.classList.remove('show');
       setTimeout(() => notification.remove(), 300);
     }
-  }, 5000);
+  }, 8000);
+}
+
+function highlightNewRow(tableBodyId, rowIndex) {
+  const tbody = byId(tableBodyId);
+  if (!tbody) return;
+  
+  const row = tbody.querySelector(`tr[data-i="${rowIndex}"]`);
+  if (!row) return;
+  
+  // Add highlight animation
+  row.classList.add('row-highlight');
+  
+  // Scroll the highlighted row into view (since newest rows are now at top)
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
+  // Remove the class after animation completes
+  setTimeout(() => {
+    row.classList.remove('row-highlight');
+  }, 2000);
 }
 
 async function safeSubmit(modalId, buttonId, submitFunction) {
@@ -1072,7 +1295,27 @@ async function safeSubmit(modalId, buttonId, submitFunction) {
     endSubmission(modalId, buttonId, true);
   } catch (error) {
     console.error("Submission error:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Submission failed";
+    if (error.message) {
+      if (error.message.includes("network") || error.message.includes("fetch")) {
+        errorMessage = "Network error. Check connection";
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "Request timed out";
+      } else if (error.message.includes("unauthorized") || error.message.includes("auth")) {
+        errorMessage = "Authentication error. Please sign in again";
+      } else {
+        errorMessage = `Error: ${error.message.substring(0, 50)}`;
+      }
+    }
+    
     endSubmission(modalId, buttonId, false);
+    showErrorNotification(errorMessage, () => {
+      // Retry by clicking the button again
+      const btn = byId(buttonId);
+      if (btn) btn.click();
+    });
   }
 }
 
@@ -1137,6 +1380,7 @@ function td(text){ return `<td title="${(text??'').toString().replace(/"/g,'&quo
 /* ===== Row builders (display no decimals when not needed) ===== */
 function wagesRowEl(r,i){
   const tr=document.createElement("tr");
+  tr.setAttribute('data-i', i); // Set data-i on the tr element for highlighting
   tr.innerHTML=`
     <td class="actions-cell">
       <button class="icon-btn edit-wages" title="Edit" data-i="${i}" aria-label="Edit">${pencilSVG()}</button>
@@ -1186,6 +1430,7 @@ function homeRowEl(r,i){
 
 function reimbOnlyRowEl(r,i){
   const tr=document.createElement("tr");
+  tr.setAttribute('data-i', i); // Set data-i on the tr element for highlighting
   tr.innerHTML=`
     <td class="actions-cell">
       <button class="icon-btn edit-reimbonly" title="Edit" data-i="${i}">${pencilSVG()}</button>
@@ -1199,65 +1444,154 @@ function reimbOnlyRowEl(r,i){
 function renderWages(){
   const tb = byId("wagesBody"); if (!tb) return; tb.innerHTML = "";
   let added = 0;
-  // iterate full array so indices match original array (for edit/delete)
+  
+  // Create array of filtered rows with their original indices
+  const filteredRows = [];
   wagesRows.forEach((r,i)=>{
-    if (!applyDateFilter([r], "date").length) return;
-    tb.appendChild(wagesRowEl(r,i));
+    if (applyDateFilter([r], "date").length) {
+      filteredRows.push({row: r, index: i});
+    }
+  });
+  
+  // Reverse to show newest first
+  filteredRows.reverse().forEach(({row, index})=>{
+    tb.appendChild(wagesRowEl(row, index));
     added++;
   });
+  
+  // Ensure at least 3 rows are shown
+  const minRows = 3;
   if (added === 0){
+    // Show empty message row plus 2 placeholder rows
     const tr = document.createElement("tr"); tr.className = "placeholder-row";
     tr.innerHTML = `<td colspan="6">${langStrings[currentLang].emptyWages}</td>`;
     tb.appendChild(tr);
+    added++;
   }
+  
+  // Add empty placeholder rows to reach minimum
+  while (added < minRows) {
+    const tr = document.createElement("tr"); tr.className = "placeholder-row empty-row";
+    tr.innerHTML = `<td colspan="6">―</td>`;
+    tb.appendChild(tr);
+    added++;
+  }
+  
   updateSectionTotals();
 }
 
 function renderReimb(){
   const tb = byId("reimbBody"); if (!tb) return; tb.innerHTML = "";
   let added = 0;
+  
+  // Create array of filtered rows with their original indices
+  const filteredRows = [];
   reimbRows.forEach((r,i)=>{
-    if (!applyDateFilter([r], "date").length) return;
-    tb.appendChild(reimbRowEl(r,i));
+    if (applyDateFilter([r], "date").length) {
+      filteredRows.push({row: r, index: i});
+    }
+  });
+  
+  // Reverse to show newest first
+  filteredRows.reverse().forEach(({row, index})=>{
+    tb.appendChild(reimbRowEl(row, index));
     added++;
   });
+  
+  // Ensure at least 3 rows are shown
+  const minRows = 3;
   if (added === 0){
+    // Show empty message row plus 2 placeholder rows
     const tr = document.createElement("tr"); tr.className = "placeholder-row";
     tr.innerHTML = `<td colspan="8">${langStrings[currentLang].emptyGrocery}</td>`;
     tb.appendChild(tr);
+    added++;
   }
+  
+  // Add empty placeholder rows to reach minimum
+  while (added < minRows) {
+    const tr = document.createElement("tr"); tr.className = "placeholder-row empty-row";
+    tr.innerHTML = `<td colspan="8">―</td>`;
+    tb.appendChild(tr);
+    added++;
+  }
+  
   updateSectionTotals();
 }
 
 function renderHome(){
   const tb = byId("homeBody"); if (!tb) return; tb.innerHTML = "";
   let added = 0;
+  
+  // Create array of filtered rows with their original indices
+  const filteredRows = [];
   homeRows.forEach((r,i)=>{
-    if (!applyDateFilter([r], "date").length) return;
-    tb.appendChild(homeRowEl(r,i));
+    if (applyDateFilter([r], "date").length) {
+      filteredRows.push({row: r, index: i});
+    }
+  });
+  
+  // Reverse to show newest first
+  filteredRows.reverse().forEach(({row, index})=>{
+    tb.appendChild(homeRowEl(row, index));
     added++;
   });
+  
+  // Ensure at least 3 rows are shown
+  const minRows = 3;
   if (added === 0){
+    // Show empty message row plus 2 placeholder rows
     const tr = document.createElement("tr"); tr.className = "placeholder-row";
     tr.innerHTML = `<td colspan="8">${langStrings[currentLang].emptyFamily}</td>`;
     tb.appendChild(tr);
+    added++;
   }
+  
+  // Add empty placeholder rows to reach minimum
+  while (added < minRows) {
+    const tr = document.createElement("tr"); tr.className = "placeholder-row empty-row";
+    tr.innerHTML = `<td colspan="8">―</td>`;
+    tb.appendChild(tr);
+    added++;
+  }
+  
   updateSectionTotals();
 }
 
 function renderReimbOnly(){
   const tb = byId("reimbOnlyBody"); if (!tb) return; tb.innerHTML = "";
   let added = 0;
+  
+  // Create array of filtered rows with their original indices
+  const filteredRows = [];
   reimbOnlyRows.forEach((r,i)=>{
-    if (!applyDateFilter([r], "date").length) return;
-    tb.appendChild(reimbOnlyRowEl(r,i));
+    if (applyDateFilter([r], "date").length) {
+      filteredRows.push({row: r, index: i});
+    }
+  });
+  
+  // Reverse to show newest first
+  filteredRows.reverse().forEach(({row, index})=>{
+    tb.appendChild(reimbOnlyRowEl(row, index));
     added++;
   });
+  
   if (added === 0){
     const tr = document.createElement("tr"); tr.className = "placeholder-row";
     tr.innerHTML = `<td colspan="5">${langStrings[currentLang].emptyReimb}</td>`;
     tb.appendChild(tr);
+    added++;
   }
+  
+  // Add empty placeholder rows to reach minimum
+  const minRows = 3;
+  while (added < minRows) {
+    const tr = document.createElement("tr"); tr.className = "placeholder-row empty-row";
+    tr.innerHTML = `<td colspan="5">―</td>`;
+    tb.appendChild(tr);
+    added++;
+  }
+  
   updateSectionTotals();
 }
 
@@ -1324,24 +1658,60 @@ supabase.auth.onAuthStateChange((_evt, session) => {
 /* ===== Storage upload for receipts (quiet fallback) ===== */
 let storageOK = false;
 async function preflightStorage() {
-  // UPDATED: list a PUBLIC bucket path to verify access
-  if (storageChecked) return storageOK;
-  try {
-    const { data, error } = await supabase.storage.from("receipts").list("", { limit: 1 });
-    storageOK = !error;
-  } catch (_) {
-    storageOK = false;
-  }
+  // Force storage to be unavailable for now - use base64 fallback
+  console.log("🔧 Storage disabled - using base64 fallback mode");
+  storageOK = false;
   storageChecked = true;
   return storageOK;
 }
+/* ===== Optimized image compression and loading ===== */
+function compressImage(file, maxWidth = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions maintaining aspect ratio
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      
+      console.log(`📏 Image compressed: ${Math.round(file.size/1024)}KB → ${Math.round(compressedDataUrl.length*0.75/1024)}KB`);
+      resolve(compressedDataUrl);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
+  console.log("📤 Starting optimized upload process...", { fileOrDataUrl: typeof fileOrDataUrl, folder });
+  
   await preflightStorage();
   if (!storageOK) {
-    return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
+    console.log("💾 Using optimized base64 storage...");
+    if (typeof fileOrDataUrl === "string") return fileOrDataUrl;
+    
+    // Compress image before storing as base64
+    if (fileOrDataUrl.size > 500000) { // If larger than 500KB
+      console.log("🗜️ Compressing large image...");
+      return await compressImage(fileOrDataUrl);
+    }
+    
+    return await fileToDataURL(fileOrDataUrl);
   }
 
-  // Ensure user is authenticated for storage uploads
+  // Storage code (won't execute due to forced fallback)
   if (!currentUser) {
     console.warn("No authenticated user for storage upload, falling back to data URL");
     return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
@@ -1357,7 +1727,6 @@ async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
     ext = (blob?.type || "image/png").split("/")[1] || "png";
   }
 
-  // Use user ID for folder organization to match RLS policies
   const userFolder = currentUser.id;
   const path = `${userFolder}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   
@@ -1815,7 +2184,16 @@ document.addEventListener("click",async (e)=>{
         obj.id = saved.id; 
       }
 
-      if(editIdx!=="") wagesRows[+editIdx]=obj; else wagesRows.push(obj);
+      const isNewRow = editIdx === "";
+      if(editIdx!=="") {
+        wagesRows[+editIdx]=obj;
+        // Highlight edited row
+        setTimeout(() => highlightNewRow("wagesBody", +editIdx), 100);
+      } else {
+        wagesRows.push(obj);
+        // Highlight new row (last index)
+        setTimeout(() => highlightNewRow("wagesBody", wagesRows.length - 1), 100);
+      }
       renderWages(); saveAll(); 
       $("#wagesModal").classList.remove("open"); removeBlurEffect();
     });
@@ -1854,7 +2232,16 @@ document.addEventListener("click",async (e)=>{
         obj.id = saved.id; 
       }
 
-      if(editIdx!=="") reimbRows[+editIdx]=obj; else reimbRows.push(obj);
+      const isNewRow = editIdx === "";
+      if(editIdx!=="") {
+        reimbRows[+editIdx]=obj;
+        // Highlight edited row
+        setTimeout(() => highlightNewRow("reimbBody", +editIdx), 100);
+      } else {
+        reimbRows.push(obj);
+        // Highlight new row (last index)
+        setTimeout(() => highlightNewRow("reimbBody", reimbRows.length - 1), 100);
+      }
       pendingReceiptImage = null; pendingReceiptName = "";
       renderReimb(); saveAll(); 
       $("#receiptModal").classList.remove("open"); removeBlurEffect();
@@ -1880,7 +2267,16 @@ document.addEventListener("click",async (e)=>{
         obj.id = saved.id; 
       }
 
-      if(editIdx!=="") reimbOnlyRows[+editIdx]=obj; else reimbOnlyRows.push(obj);
+      const isNewRow = editIdx === "";
+      if(editIdx!=="") {
+        reimbOnlyRows[+editIdx]=obj;
+        // Highlight edited row
+        setTimeout(() => highlightNewRow("reimbOnlyBody", +editIdx), 100);
+      } else {
+        reimbOnlyRows.push(obj);
+        // Highlight new row (last index)
+        setTimeout(() => highlightNewRow("reimbOnlyBody", reimbOnlyRows.length - 1), 100);
+      }
       renderReimbOnly(); saveAll(); 
       $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect();
     });
@@ -1919,7 +2315,16 @@ document.addEventListener("click",async (e)=>{
         obj.id = saved.id; 
       }
 
-      if(editIdx!=="") homeRows[+editIdx]=obj; else homeRows.push(obj);
+      const isNewRow = editIdx === "";
+      if(editIdx!=="") {
+        homeRows[+editIdx]=obj;
+        // Highlight edited row
+        setTimeout(() => highlightNewRow("homeBody", +editIdx), 100);
+      } else {
+        homeRows.push(obj);
+        // Highlight new row (last index)
+        setTimeout(() => highlightNewRow("homeBody", homeRows.length - 1), 100);
+      }
       pendingFamilyImage = null; pendingFamilyName = "";
       renderHome(); saveAll(); 
       $("#familyModal").classList.remove("open"); removeBlurEffect();
@@ -2386,34 +2791,40 @@ document.getElementById("importExcel").addEventListener("change", e=>{
 });
 
 (async () => {
-  console.log("🚀 Money Tracker v1.5 - Application Starting");
+  console.log("🚀 Money Tracker v3.0 - Application Starting");
   console.log("📅 Build Date:", new Date().toISOString());
-  console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Auto-Width Modals, Version in Filter Area");
+  console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Optimized Base64 with Compression");
   
   await getSessionUser();
+  console.log("🔐 Authentication check:");
+  console.log("  - currentUser:", currentUser);
+  console.log("  - User ID:", currentUser?.id);
+  console.log("  - Email:", currentUser?.email);
+  
   toggleUI();
   if (currentUser) await loadFromDBAndRender();
   preflightStorage();
   
-  console.log("✅ Money Tracker v1.5 - Application Ready");
+  console.log("✅ Money Tracker v2.5 - Application Ready");
 })();
 </script>
 
 <!-- Delete confirmation modal -->
 <div class="modal" id="confirmDeleteModal" role="dialog" aria-modal="true">
-  <div class="panel">
+  <div class="panel delete-modal-panel">
     <div class="card-header">
       <div class="card-title"><strong id="confirmDeleteTitle">Confirm Delete</strong></div>
       <div class="actions"><button class="btn warn sm" id="closeConfirmDelete">✕</button></div>
     </div>
-    <p id="confirmDeleteMsg" style="margin:10px 0; color:var(--ink)">Are you sure you want to delete this row?</p>
-    <div id="deleteRowDetails" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px; margin:10px 0; display:none;">
-      <div style="font-weight:600; margin-bottom:8px; color:var(--ink)">Row Details:</div>
-      <div id="deleteRowData" style="font-family:monospace; font-size:0.9em; color:var(--muted);"></div>
-    </div>
-    <div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px">
-      <button class="btn" id="cancelDeleteBtn">Cancel</button>
-      <button class="btn warn" id="confirmDeleteBtn">Delete</button>
+    <div class="delete-modal-content">
+      <p id="confirmDeleteMsg">Are you sure you want to delete this row?</p>
+      <div id="deleteRowDetails" class="delete-row-details">
+        <div id="deleteRowData" class="delete-row-data"></div>
+      </div>
+      <div class="delete-modal-actions">
+        <button class="btn" id="cancelDeleteBtn">Cancel</button>
+        <button class="btn warn" id="confirmDeleteBtn">Delete</button>
+      </div>
     </div>
   </div>
 </div>
