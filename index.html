@@ -69,6 +69,30 @@
     .title{font-weight:800; font-size:calc(1.4rem * var(--scale)); color:#000; line-height:1.2; display:flex; align-items:center;}
     .version{font-size:calc(0.9rem * var(--scale)); color:#ffffff; font-weight:bold; margin-left:8px; background:#e74c3c; padding:3px 8px; border-radius:6px; text-shadow:0 1px 2px rgba(0,0,0,0.3); flex-shrink:0;}
     .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    
+    /* Connection status indicator */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      font-weight: 600;
+      background: #ff6b6b;
+      color: white;
+      border: 1px solid #ff5252;
+    }
+    .connection-status.online {
+      background: #51cf66;
+      color: white;
+      border-color: #40c057;
+    }
+    .connection-status.connecting {
+      background: #ffd43b;
+      color: #495057;
+      border-color: #fab005;
+    }
     #langSwitch{
       background:rgba(255,255,255,.8); color:#000; border:1px solid rgba(0,0,0,.25);
       border-radius:10px; padding:6px 10px; font-size:calc(.9rem * var(--scale)); width:60px;
@@ -118,7 +142,8 @@
     }
     .btn:hover{background:#e9eef5;} .btn:active{opacity:.95;}
     .btn.good{background:#e6f3ee; border-color:#cfe7db; color:#0e8f42}
-    .btn.warn{background:#fff1dd; border-color:#f3d9a8}
+    .btn.warn{background:#ff8c00; border-color:#e67300; color:#fff}
+    .btn.warn:hover{background:#e67300;}
     .btn.sm{padding:4px 8px; font-size:calc(.9rem * var(--scale))}
     .icon-btn{ background:#eef2f9; border:1px solid var(--border); color:#000;
       width:28px; height:28px; border-radius:7px; display:inline-grid; place-items:center;
@@ -196,6 +221,25 @@
       width:100%; background:#ffffff; color:var(--ink); border:1px solid var(--border);
       padding:8px 10px; border-radius:10px; font-size:calc(1rem * var(--scale))
     }
+    
+    /* Improve mobile dropdown behavior */
+    select {
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    
+    /* Add custom dropdown arrow */
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 16px;
+      padding-right: 32px;
+    }
+    
     input[type="date"] { text-align: left; }
     input::placeholder{color:#8391ab}
 
@@ -213,6 +257,16 @@
       width:auto; min-width:400px; max-width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
       border:1px solid var(--border); border-radius:16px; padding:14px; box-shadow:0 10px 26px rgba(0,0,0,.2)
     }
+    
+    /* Mobile responsive modal panels */
+    @media(max-width:600px){
+      .panel{
+        min-width:280px;
+        max-width:95vw;
+        padding:12px;
+        margin:8px;
+      }
+    }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
     
@@ -223,6 +277,25 @@
     .form-grid .full-width{grid-column:1 / -1;}
     .form-grid .full-width input{width:100%; max-width:100%;}
     .form-grid .upload-btn{justify-self:start; width:auto; max-width:none;}
+    
+    /* Mobile responsive form layout */
+    @media(max-width:600px){
+      .form-grid{
+        grid-template-columns:1fr;
+        max-width:300px;
+        gap:6px;
+        padding:0 16px;
+      }
+      .form-grid label{
+        justify-content:flex-start;
+        text-align:left;
+        font-size:0.9em;
+      }
+      .form-grid input, .form-grid select{
+        width:100%;
+        max-width:100%;
+      }
+    }
 
     /* Loading styles */
     .loading-overlay {
@@ -246,6 +319,31 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+      padding: 20px;
+      margin: auto;
+    }
+    
+    /* Mobile-specific loading positioning */
+    @media(max-width:600px){
+      .loading-overlay {
+        /* Ensure it covers the entire viewport on mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loading-content {
+        position: relative;
+        transform: none;
+        margin: 0;
+        padding: 16px;
+      }
     }
     .loading-spinner {
       width: 50px;
@@ -556,6 +654,11 @@
           <option value="vi">VN</option>
         </select>
 
+        <div id="connectionStatus" class="connection-status" style="display:none;">
+          <span id="connectionIcon">🌐</span>
+          <span id="connectionText">Offline</span>
+        </div>
+
         <button class="mini-btn" id="signOutBtn" title="Sign out">Sign out</button>
       </div>
     </header>
@@ -578,7 +681,7 @@
         <span class="arrow">→</span>
         <input type="date" id="filterEnd" title="End date">
         <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
-        <span class="version-badge">v2.6</span>
+        <span class="version-badge">v3.7</span>
       </div>
 
       <!-- WORK -->
@@ -1200,6 +1303,36 @@ function setButtonLoading(buttonId, isLoading) {
   }
 }
 
+// Connection status management
+function updateConnectionStatus(status) {
+  const statusEl = byId("connectionStatus");
+  const iconEl = byId("connectionIcon");
+  const textEl = byId("connectionText");
+  
+  if (!statusEl || !iconEl || !textEl) return;
+  
+  // Remove all status classes
+  statusEl.classList.remove("online", "connecting");
+  
+  switch (status) {
+    case "online":
+      statusEl.style.display = "none"; // Hide when online
+      break;
+    case "connecting":
+      statusEl.style.display = "flex";
+      statusEl.classList.add("connecting");
+      iconEl.textContent = "⚡";
+      textEl.textContent = "Connecting...";
+      break;
+    case "offline":
+    default:
+      statusEl.style.display = "flex";
+      iconEl.textContent = "🌐";
+      textEl.textContent = "Offline";
+      break;
+  }
+}
+
 /* ===== Enhanced Submission Protection ===== */
 let isSubmitting = false;
 
@@ -1758,10 +1891,11 @@ function ensureUser(){ if (!currentUser) throw new Error("No signed-in user. DB 
 async function fetchRows(table, dateField="date"){
   ensureUser();
   
-  // Optimized query with better ordering and potential limits
+  // Optimized query with user isolation and better ordering
   let q = supabase
     .from(table)
     .select("*")
+    .eq("user_id", currentUser.id) // ← CRITICAL: Only fetch current user's data
     .order(dateField, { ascending: false }) // Recent first is often faster
     .order("id", { ascending: false }); // Secondary sort for consistency
     
@@ -1812,7 +1946,12 @@ async function upsertRow(table, payload){
 
 async function deleteRow(table, id){
   ensureUser();
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  // CRITICAL: Only allow deleting rows that belong to current user
+  const { error } = await supabase
+    .from(table)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", currentUser.id); // ← Prevent deleting other users' data
   if (error) throw error;
 }
 
@@ -1868,6 +2007,7 @@ async function loadFromDBAndRender() {
   
   const startTime = performance.now();
   showLoading("Loading data...");
+  updateConnectionStatus("connecting");
   
   try {
     // Load all tables in PARALLEL for faster performance
@@ -1880,7 +2020,13 @@ async function loadFromDBAndRender() {
         return result;
       } catch (error) {
         console.warn(`Failed to load ${tableName}:`, error);
-        return []; // Return empty array if this table fails
+        
+        // Check for network connectivity issues
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+          throw new Error(`NETWORK_ERROR: Cannot connect to database. Please check your internet connection.`);
+        }
+        
+        return []; // Return empty array if this table fails for other reasons
       }
     };
 
@@ -1906,17 +2052,27 @@ async function loadFromDBAndRender() {
     saveAll();
     renderAll();
     hideLoading();
+    updateConnectionStatus("online");
   } catch (e) {
     console.error("Error loading data:", e);
     hideLoading();
+    updateConnectionStatus("offline");
     // Still render with whatever data we have locally
     renderAll();
     
-    // Show user-friendly error message
-    if (e.message?.includes('timeout') || e.code === '57014') {
-      toast("Database connection timeout. Using local data. Please try refreshing the page.");
+    // Show user-friendly error message based on error type
+    if (e.message?.includes('NETWORK_ERROR')) {
+      showErrorNotification("🌐 Cannot connect to database. Please check your internet connection and try again.", "Retry", async () => {
+        await loadFromDBAndRender();
+      });
+    } else if (e.message?.includes('timeout') || e.code === '57014') {
+      showErrorNotification("⏱️ Database connection timeout. Using local data.", "Retry", async () => {
+        await loadFromDBAndRender();
+      });
     } else {
-      toast("Unable to load latest data. Using local data.");
+      showErrorNotification("⚠️ Unable to load latest data. Using local data.", "Retry", async () => {
+        await loadFromDBAndRender();
+      });
     }
   }
 }
@@ -2164,6 +2320,11 @@ const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider"
 /* ===== Click handlers (CRUD wired) ===== */
 document.addEventListener("click",async (e)=>{
   const t=e.target;
+
+  // Ignore clicks on select elements and their options to prevent dropdown interference on mobile
+  if (t.tagName === 'SELECT' || t.tagName === 'OPTION' || t.closest('select')) {
+    return;
+  }
 
   // Wages
   if(t.id==="addWageRow") openWagesModal();
@@ -2642,7 +2803,7 @@ async function migrateLegacyImagePaths() {
   // Check if migration has already been run for this user
   const migrationKey = `migration_completed_${currentUser.id}`;
   if (localStorage.getItem(migrationKey)) {
-    console.log("Legacy image path migration already completed for this user");
+    console.log("Legacy image path migration already completed");
     return;
   }
   
@@ -2681,9 +2842,9 @@ async function migrateLegacyImagePaths() {
               .eq('id', record.id);
             
             if (updateError) {
-              console.warn(`Failed to update ${table} record ${record.id}:`, updateError);
+              console.warn(`Failed to update ${table} record:`, updateError);
             } else {
-              console.log(`Updated ${table} record ${record.id} path`);
+              console.log(`Updated ${table} record path`);
               totalUpdated++;
             }
           }
@@ -2791,21 +2952,18 @@ document.getElementById("importExcel").addEventListener("change", e=>{
 });
 
 (async () => {
-  console.log("🚀 Money Tracker v3.0 - Application Starting");
+  console.log("🚀 Money Tracker v3.7 - Application Starting");
   console.log("📅 Build Date:", new Date().toISOString());
-  console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Optimized Base64 with Compression");
+  console.log("🔧 Features: Enhanced RLS Security, User Data Isolation, Image Migration, Enhanced UI, Optimized Base64 with Compression");
   
   await getSessionUser();
-  console.log("🔐 Authentication check:");
-  console.log("  - currentUser:", currentUser);
-  console.log("  - User ID:", currentUser?.id);
-  console.log("  - Email:", currentUser?.email);
+  console.log("🔐 Authentication check completed");
   
   toggleUI();
   if (currentUser) await loadFromDBAndRender();
   preflightStorage();
   
-  console.log("✅ Money Tracker v2.5 - Application Ready");
+  console.log("✅ Money Tracker v3.7 - Application Ready");
 })();
 </script>
 
