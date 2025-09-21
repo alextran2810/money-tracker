@@ -65,7 +65,9 @@
       border-bottom:1px solid var(--app-header-border);
       color:#000;
     }
+    .title-section{display:flex; align-items:center; gap:8px;}
     .title{font-weight:800; font-size:calc(1.4rem * var(--scale)); color:#000}
+    .version{font-size:calc(0.8rem * var(--scale)); color:#666; font-weight:400;}
     .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     #langSwitch{
       background:rgba(255,255,255,.8); color:#000; border:1px solid rgba(0,0,0,.25);
@@ -197,6 +199,14 @@
     }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
+    
+    /* 2-column form layout */
+    .form-grid{display:grid; grid-template-columns:120px 1fr; gap:8px 12px; align-items:center;}
+    .form-grid label{display:flex; align-items:center; gap:8px; font-weight:600; margin:0;}
+    .form-grid input, .form-grid select{width:200px; max-width:200px;}
+    .form-grid .full-width{grid-column:1 / -1;}
+    .form-grid .full-width input{width:100%; max-width:100%;}
+    .form-grid .upload-btn{justify-self:start; width:auto; max-width:none;}
 
     /* Loading styles */
     .loading-overlay {
@@ -311,7 +321,10 @@
   <!-- APP VIEW -->
   <div id="appView" style="display:none">
     <header>
-      <div class="title" id="appTitle">Money Tracker</div>
+      <div class="title-section">
+        <div class="title" id="appTitle">Money Tracker</div>
+        <div class="version">v1.0</div>
+      </div>
       <div class="header-right">
         <input type="file" id="importExcel" accept=".xlsx,.xls" style="display:none">
         <button class="mini-btn" id="exportExcel" style="display:none">⬇ Export</button>
@@ -442,15 +455,23 @@
         <div class="card-title"><span class="accent-dot wages"></span><strong id="wagesModalTitle">Enter Your Wage</strong></div>
         <div class="actions"><button class="btn warn sm" id="closeWagesModal">✕</button></div>
       </div>
-      <div class="grid">
-        <div><label id="lblWDate">Date<input id="wDate" type="date"></label></div>
-        <div><label id="lblWHours">Hours<input id="wHours" type="number" step="0.01" min="0"></label></div>
-        <div><label id="lblWAmount">Wage Amount<input id="wAmount" type="number" step="0.01" min="0"></label></div>
-        <div><label id="lblWMethod">Method
-          <select id="wMethod">
-            <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
-          </select></label></div>
-        <div style="grid-column:span 12"><label id="lblWNotes">Notes<input id="wNotes" type="text"></label></div>
+      <div class="form-grid">
+        <label id="lblWDate">Date</label>
+        <input id="wDate" type="date">
+        
+        <label id="lblWHours">Hours</label>
+        <input id="wHours" type="number" step="0.01" min="0">
+        
+        <label id="lblWAmount">Wage Amount</label>
+        <input id="wAmount" type="number" step="0.01" min="0">
+        
+        <label id="lblWMethod">Method</label>
+        <select id="wMethod">
+          <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
+        </select>
+        
+        <label id="lblWNotes" class="full-width">Notes</label>
+        <input id="wNotes" type="text" class="full-width">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addWagesRow" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -465,24 +486,47 @@
         <div class="card-title"><span class="accent-dot grocery"></span><strong id="groceryModalTitle">Enter New Receipt</strong></div>
         <div class="actions"><button class="btn warn sm" id="closeReceiptModal">✕</button></div>
       </div>
-      <div class="grid">
-        <div><label id="lblGDate">Date<input id="gDate" type="date"></label></div>
-        <div><label id="lblGVendor">Store<input id="gVendor" type="text" placeholder="e.g., Costco"></label></div>
-        <div><label id="lblGTotal">Total<input id="gTotal" type="number" step="0.01"></label></div>
-        <div><label id="lblGMethod">Method
-          <select id="gPayMethod">
-            <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
-          </select></label></div>
-        <div><label id="lblGCard">Last 4<select id="gCardLast4">
+      <div class="form-grid">
+        <label id="lblGDate">Date</label>
+        <input id="gDate" type="date">
+        
+        <label id="lblGVendor">Store</label>
+        <select id="gVendor">
+          <option value="">Select Store...</option>
+          <option value="A Dong">A Dong</option>
+          <option value="ABC">ABC</option>
+          <option value="Costco">Costco</option>
+          <option value="Da Lat">Da Lat</option>
+          <option value="Gas">Gas</option>
+          <option value="Home Depot">Home Depot</option>
+          <option value="Jons">Jons</option>
+          <option value="Saigon">Saigon</option>
+          <option value="T&K">T&K</option>
+          <option value="Target">Target</option>
+          <option value="Westminster">Westminster</option>
+        </select>
+        
+        <label id="lblGTotal">Total</label>
+        <input id="gTotal" type="number" step="0.01">
+        
+        <label id="lblGMethod">Method</label>
+        <select id="gPayMethod">
+          <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
+        </select>
+        
+        <label id="lblGCard">Last 4</label>
+        <select id="gCardLast4">
           <option value="">Select...</option>
           <option value="8208">8208</option>
           <option value="7443">7443</option>
           <option value="6514">6514</option>
-        </select></label></div>
-
+        </select>
+        
+        <label id="lblGNotes" class="full-width">Notes</label>
+        <input id="gNotes" type="text" class="full-width">
+        
         <input type="file" id="receiptFile" accept="image/*" style="display:none">
-        <button class="btn" id="attachReceiptBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
-        <div style="grid-column:span 12"><label id="lblGNotes">Notes<input id="gNotes" type="text"></label></div>
+        <button class="btn upload-btn" id="attachReceiptBtn">📎 Upload</button>
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addReceipt" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -497,14 +541,20 @@
         <div class="card-title"><span class="accent-dot reimb"></span><strong id="reimbModalTitle">Enter Your Reimbursement</strong></div>
         <div class="actions"><button class="btn warn sm" id="closeReimbOnlyModal">✕</button></div>
       </div>
-      <div class="grid">
-        <div><label id="lblRDate">Date<input id="rDate" type="date"></label></div>
-        <div><label id="lblRAmount">Amount<input id="rAmount" type="number" step="0.01"></label></div>
-        <div><label id="lblRMethod">Method
-          <select id="rMethod">
-            <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
-          </select></label></div>
-        <div style="grid-column:span 12"><label id="lblRNotes">Notes<input id="rNotes" type="text"></label></div>
+      <div class="form-grid">
+        <label id="lblRDate">Date</label>
+        <input id="rDate" type="date">
+        
+        <label id="lblRAmount">Amount</label>
+        <input id="rAmount" type="number" step="0.01">
+        
+        <label id="lblRMethod">Method</label>
+        <select id="rMethod">
+          <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
+        </select>
+        
+        <label id="lblRNotes" class="full-width">Notes</label>
+        <input id="rNotes" type="text" class="full-width">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addReimbOnlyRowSubmit" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -519,25 +569,47 @@
         <div class="card-title"><span class="accent-dot family"></span><strong id="familyModalTitle">Enter Family Transaction</strong></div>
         <div class="actions"><button class="btn warn sm" id="closeFamilyModal">✕</button></div>
       </div>
-      <div class="grid">
-        <div><label id="lblFDate">Date<input id="fDate" type="date"></label></div>
-        <div><label id="lblFVendor">Store<input id="fVendor" type="text" placeholder="e.g., Target"></label></div>
-        <div><label id="lblFTotal">Total<input id="fTotal" type="number" step="0.01"></label></div>
-        <div><label id="lblFMethod">Method
-          <select id="fPayMethod">
-            <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
-          </select></label></div>
-        <div><label id="lblFCard">Last 4<select id="fCardLast4">
+      <div class="form-grid">
+        <label id="lblFDate">Date</label>
+        <input id="fDate" type="date">
+        
+        <label id="lblFVendor">Store</label>
+        <select id="fVendor">
+          <option value="">Select Store...</option>
+          <option value="A Dong">A Dong</option>
+          <option value="ABC">ABC</option>
+          <option value="Costco">Costco</option>
+          <option value="Da Lat">Da Lat</option>
+          <option value="Gas">Gas</option>
+          <option value="Home Depot">Home Depot</option>
+          <option value="Jons">Jons</option>
+          <option value="Saigon">Saigon</option>
+          <option value="T&K">T&K</option>
+          <option value="Target">Target</option>
+          <option value="Westminster">Westminster</option>
+        </select>
+        
+        <label id="lblFTotal">Total</label>
+        <input id="fTotal" type="number" step="0.01">
+        
+        <label id="lblFMethod">Method</label>
+        <select id="fPayMethod">
+          <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
+        </select>
+        
+        <label id="lblFCard">Last 4</label>
+        <select id="fCardLast4">
           <option value="">Select...</option>
           <option value="8208">8208</option>
           <option value="7443">7443</option>
           <option value="6514">6514</option>
-        </select></label></div>
-
+        </select>
+        
+        <label id="lblFNotes" class="full-width">Notes</label>
+        <input id="fNotes" type="text" class="full-width">
+        
         <input type="file" id="familyFile" accept="image/*" style="display:none">
-        <button class="btn" id="attachFamilyBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
-
-        <div style="grid-column:span 12"><label id="lblFNotes">Notes<input id="fNotes" type="text"></label></div>
+        <button class="btn upload-btn" id="attachFamilyBtn">📎 Upload</button>
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addFamilySubmit" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -1189,9 +1261,9 @@ async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
 
 /* ===== DB mapping + CRUD ===== */
 const T_WAGES  = "wages";
-const T_WORK   = "grocery";
+const T_WORK   = "work_expense";
 const T_REIMB  = "reimbursements";
-const T_FAMILY = "home_transactions";
+const T_FAMILY = "family_expense";
 
 function nowIso(){ return new Date().toISOString(); }
 function ensureUser(){ if (!currentUser) throw new Error("No signed-in user. DB writes blocked."); }
@@ -1264,6 +1336,7 @@ function mapWorkUIToDB(r){
     pay_method:r.payMethod||"Credit Card", card_last4:r.cardLast4||null,
     notes:r.notes||null, receipt_img:r.receiptImg||null };
   if (r.id) out.id = r.id;
+  if (currentUser) out.user_id = currentUser.id;
   return out;
 }
 function mapFamilyUIToDB(r){
@@ -1272,18 +1345,21 @@ function mapFamilyUIToDB(r){
     pay_method:r.payMethod||"Credit Card", card_last4:r.cardLast4||null,
     notes:r.notes||null, receipt_img:r.receiptImg||null };
   if (r.id) out.id = r.id;
+  if (currentUser) out.user_id = currentUser.id;
   return out;
 }
 function mapWageUIToDB(r){
   const out = { date:r.date, hours:r.hours?Number(r.hours):0,
     amount:r.amount?Number(r.amount):0, method:r.method||"Cash", notes:r.notes||null };
   if (r.id) out.id = r.id;
+  if (currentUser) out.user_id = currentUser.id;
   return out;
 }
 function mapReimbOnlyUIToDB(r){
   const out = { date:r.date, amount:r.amount?Number(r.amount):0,
     method:r.method||"Cash", notes:r.notes||null };
   if (r.id) out.id = r.id;
+  if (currentUser) out.user_id = currentUser.id;
   return out;
 }
 
