@@ -295,12 +295,12 @@
       <div class="title" id="appTitle">Money Tracker</div>
       <div class="header-right">
         <input type="file" id="importExcel" accept=".xlsx,.xls" style="display:none">
-        <button class="mini-btn" id="exportExcel">⬇ Export</button>
-        <button class="mini-btn" id="importBtn">⬆ Import</button>
+        <button class="mini-btn" id="exportExcel" style="display:none">⬇ Export</button>
+        <button class="mini-btn" id="importBtn" style="display:none">⬆ Import</button>
 
         <div class="font-zoom">
           <button id="fsDown" class="mini-btn" title="Smaller">A−</button>
-          <input id="fsSlider" type="range" min="60" max="130" value="70" step="5" />
+          <input id="fsSlider" type="range" min="60" max="150" value="70" step="5" />
           <button id="fsUp" class="mini-btn" title="Larger">A+</button>
         </div>
 
@@ -454,7 +454,12 @@
           <select id="gPayMethod">
             <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
           </select></label></div>
-        <div><label id="lblGCard">Last 4<input id="gCardLast4" type="text" maxlength="4"></label></div>
+        <div><label id="lblGCard">Last 4<select id="gCardLast4">
+          <option value="">Select...</option>
+          <option value="8208">8208</option>
+          <option value="7443">7443</option>
+          <option value="8208">8208</option>
+        </select></label></div>
 
         <input type="file" id="receiptFile" accept="image/*" style="display:none">
         <button class="btn" id="attachReceiptBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
@@ -503,7 +508,12 @@
           <select id="fPayMethod">
             <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
           </select></label></div>
-        <div><label id="lblFCard">Last 4<input id="fCardLast4" type="text" maxlength="4"></label></div>
+        <div><label id="lblFCard">Last 4<select id="fCardLast4">
+          <option value="">Select...</option>
+          <option value="8208">8208</option>
+          <option value="7443">7443</option>
+          <option value="8208">8208</option>
+        </select></label></div>
 
         <input type="file" id="familyFile" accept="image/*" style="display:none">
         <button class="btn" id="attachFamilyBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
@@ -667,6 +677,8 @@ const langStrings = {
     delete: "Delete",
     receiptAttachment: "Receipt Attachment",
     submit: "Submit",
+    signOut: "Sign out",
+    clear: "Clear",
     cash: "Cash", check: "Check", zelle: "Zelle", other: "Other",
     creditCard: "Credit Card", debitCard: "Debit Card"
   },
@@ -676,7 +688,7 @@ const langStrings = {
     enterWage: "Nhập lương", enterReceipt: "Nhập hóa đơn mới", enterReimb: "Nhập hoàn tiền", enterFamily: "Nhập giao dịch gia đình",
     date: "Ngày", hours: "Giờ", wageAmount: "Tiền lương", method: "Phương thức", notes: "Ghi chú", actions: "Thao tác",
     total: "Tổng cộng", store: "Cửa hàng", last4: "4 số cuối", amount: "Số tiền", attachment: "Đính kèm",
-    kpiReceipts: "Tổng gia đình", kpiExp: "Tổng chi", kpiReimb: "Tổng hoàn lại", kpiWages: "Tổng lương",
+    kpiReceipts: "Tổng gia đình", kpiExp: "Tổng chi tiêu", kpiReimb: "Tổng hoàn trả", kpiWages: "Tổng lương",
     emptyWages: "Chưa có dữ liệu lương", emptyGrocery: "Chưa có giao dịch công việc", emptyReimb: "Chưa có hoàn tiền", emptyFamily: "Chưa có giao dịch gia đình",
     confirmDelete: "Xóa dòng này?", upload: "📎 Tải lên",
     filter: "Bộ lọc",
@@ -686,6 +698,8 @@ const langStrings = {
     delete: "Xoá",
     receiptAttachment: "Đính kèm hoá đơn",
     submit: "Gửi",
+    signOut: "Đăng xuất",
+    clear: "Xóa",
     cash: "Tiền mặt", check: "Séc", zelle: "Zelle", other: "Khác",
     creditCard: "Thẻ tín dụng", debitCard: "Thẻ ghi nợ"
   }
@@ -726,6 +740,9 @@ function setLang(code){
   byId("attachFamilyBtn")?.replaceChildren(t.upload);
 
   byId("kpiReceiptsLabel")?.replaceChildren(t.kpiReceipts);
+  byId("kpiExpLabel")?.replaceChildren(t.kpiExp);
+  byId("kpiReimbLabel")?.replaceChildren(t.kpiReimb);
+  byId("kpiWagesLabel")?.replaceChildren(t.kpiWages);
   // Fallbacks prevent 'undefined' if a key is missing
   byId("filterLabel")?.replaceChildren(t.filter || "Filter");
   byId("confirmDeleteTitle")?.replaceChildren(t.confirmDeleteTitle || "Confirm Delete");
@@ -753,34 +770,38 @@ function setLang(code){
   byId("confirmDeleteBtn")?.replaceChildren(t.delete);
   byId("receiptAttachTitle")?.replaceChildren(t.receiptAttachment);
 
+  // Sign out and clear buttons
+  byId("signOutBtn")?.replaceChildren(t.signOut);
+  byId("clearDateFilter")?.replaceChildren(t.clear);
+
   renderAll();
 }
 
 function updateSelectOptions(){
-  const t = langStrings[currentLang];
+  // Keep payment options in English only (not translated)
   
   // Update wage method options
   const wMethod = byId("wMethod");
   if (wMethod) {
-    wMethod.innerHTML = `<option>${t.cash}</option><option>${t.check}</option><option>${t.zelle}</option><option>${t.other}</option>`;
+    wMethod.innerHTML = `<option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>`;
   }
   
-  // Update grocery payment method options
+  // Update grocery payment method options (removed Debit Card)
   const gPayMethod = byId("gPayMethod");
   if (gPayMethod) {
-    gPayMethod.innerHTML = `<option>${t.creditCard}</option><option>${t.debitCard}</option><option>${t.cash}</option><option>${t.check}</option><option>${t.other}</option>`;
+    gPayMethod.innerHTML = `<option>Credit Card</option><option>Cash</option><option>Check</option><option>Other</option>`;
   }
   
   // Update reimbursement method options
   const rMethod = byId("rMethod");
   if (rMethod) {
-    rMethod.innerHTML = `<option>${t.cash}</option><option>${t.check}</option><option>${t.zelle}</option><option>${t.other}</option>`;
+    rMethod.innerHTML = `<option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>`;
   }
   
-  // Update family payment method options
+  // Update family payment method options (removed Debit Card)
   const fPayMethod = byId("fPayMethod");
   if (fPayMethod) {
-    fPayMethod.innerHTML = `<option>${t.creditCard}</option><option>${t.debitCard}</option><option>${t.cash}</option><option>${t.check}</option><option>${t.other}</option>`;
+    fPayMethod.innerHTML = `<option>Credit Card</option><option>Cash</option><option>Check</option><option>Other</option>`;
   }
 }
 
@@ -1419,6 +1440,60 @@ let deleteCtx = null;
 function openDeleteModal(ctx){
   deleteCtx = ctx;
   const modal = byId("confirmDeleteModal");
+  const detailsDiv = byId("deleteRowDetails");
+  const dataDiv = byId("deleteRowData");
+  
+  // Get the row data to display
+  let rowData = null;
+  const { type, index } = ctx;
+  
+  if (type === "wages" && wagesRows[index]) {
+    rowData = wagesRows[index];
+  } else if (type === "reimb" && reimbRows[index]) {
+    rowData = reimbRows[index];
+  } else if (type === "reimbonly" && reimbOnlyRows[index]) {
+    rowData = reimbOnlyRows[index];
+  } else if (type === "home" && homeRows[index]) {
+    rowData = homeRows[index];
+  }
+  
+  // Display row details if we have data
+  if (rowData && detailsDiv && dataDiv) {
+    let detailsHTML = "";
+    
+    if (type === "wages") {
+      detailsHTML = `
+        <div><strong>Date:</strong> ${rowData.date || 'N/A'}</div>
+        <div><strong>Hours:</strong> ${fmtAutoPlain(rowData.hours || 0)}</div>
+        <div><strong>Amount:</strong> ${fmtAutoCurrency(rowData.amount || 0)}</div>
+        <div><strong>Method:</strong> ${rowData.method || 'N/A'}</div>
+        ${rowData.notes ? `<div><strong>Notes:</strong> ${rowData.notes}</div>` : ''}
+      `;
+    } else if (type === "reimbonly") {
+      detailsHTML = `
+        <div><strong>Date:</strong> ${rowData.date || 'N/A'}</div>
+        <div><strong>Amount:</strong> ${fmtAutoCurrency(rowData.amount || 0)}</div>
+        <div><strong>Method:</strong> ${rowData.method || 'N/A'}</div>
+        ${rowData.notes ? `<div><strong>Notes:</strong> ${rowData.notes}</div>` : ''}
+      `;
+    } else if (type === "reimb" || type === "home") {
+      detailsHTML = `
+        <div><strong>Date:</strong> ${rowData.date || 'N/A'}</div>
+        <div><strong>Store:</strong> ${rowData.vendor || 'N/A'}</div>
+        <div><strong>Total:</strong> ${fmtAutoCurrency(rowData.expense || 0)}</div>
+        <div><strong>Method:</strong> ${rowData.payMethod || 'N/A'}</div>
+        ${rowData.cardLast4 ? `<div><strong>Last 4:</strong> ${rowData.cardLast4}</div>` : ''}
+        ${rowData.notes ? `<div><strong>Notes:</strong> ${rowData.notes}</div>` : ''}
+        ${rowData.receiptImg ? `<div><strong>Has Attachment:</strong> Yes</div>` : ''}
+      `;
+    }
+    
+    dataDiv.innerHTML = detailsHTML;
+    detailsDiv.style.display = "block";
+  } else {
+    detailsDiv.style.display = "none";
+  }
+  
   modal.classList.add("open");
   const confirmBtn = byId("confirmDeleteBtn");
   confirmBtn?.setAttribute("autofocus","true");
@@ -1426,6 +1501,8 @@ function openDeleteModal(ctx){
 }
 function closeDeleteModal(){
   byId("confirmDeleteModal").classList.remove("open");
+  const detailsDiv = byId("deleteRowDetails");
+  if (detailsDiv) detailsDiv.style.display = "none";
   deleteCtx = null;
 }
 window.addEventListener("DOMContentLoaded", () => {
@@ -1471,9 +1548,9 @@ const fsSlider = $("#fsSlider"), fsDown=$("#fsDown"), fsUp=$("#fsUp");
 function applyScale(val){ document.documentElement.style.setProperty("--scale", (val/100).toString()); localStorage.setItem(SCALE_KEY, String(val)); }
 function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 fsSlider?.addEventListener("input", ()=> applyScale(+fsSlider.value));
-fsDown?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value-5, 60, 130); applyScale(+fsSlider.value); });
-fsUp?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value+5, 60, 130); applyScale(+fsSlider.value); });
-const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider")) { byId("fsSlider").value = clamp(savedScale,60,130); applyScale(+byId("fsSlider").value); }
+fsDown?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value-5, 60, 150); applyScale(+fsSlider.value); });
+fsUp?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value+5, 60, 150); applyScale(+fsSlider.value); });
+const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider")) { byId("fsSlider").value = clamp(savedScale,60,150); applyScale(+byId("fsSlider").value); }
 
 /* ===== Click handlers (CRUD wired) ===== */
 document.addEventListener("click",async (e)=>{
@@ -1981,6 +2058,10 @@ document.getElementById("importExcel").addEventListener("change", e=>{
       <div class="actions"><button class="btn warn sm" id="closeConfirmDelete">✕</button></div>
     </div>
     <p id="confirmDeleteMsg" style="margin:10px 0; color:var(--ink)">Are you sure you want to delete this row?</p>
+    <div id="deleteRowDetails" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px; margin:10px 0; display:none;">
+      <div style="font-weight:600; margin-bottom:8px; color:var(--ink)">Row Details:</div>
+      <div id="deleteRowData" style="font-family:monospace; font-size:0.9em; color:var(--muted);"></div>
+    </div>
     <div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px">
       <button class="btn" id="cancelDeleteBtn">Cancel</button>
       <button class="btn warn" id="confirmDeleteBtn">Delete</button>
