@@ -65,9 +65,9 @@
       border-bottom:1px solid var(--app-header-border);
       color:#000;
     }
-    .title-section{display:flex; align-items:center; gap:8px;}
-    .title{font-weight:800; font-size:calc(1.4rem * var(--scale)); color:#000}
-    .version{font-size:calc(0.8rem * var(--scale)); color:#666; font-weight:400;}
+    .title-section{display:flex; flex-direction:column; align-items:flex-start; justify-content:center;}
+    .title{font-weight:800; font-size:calc(1.4rem * var(--scale)); color:#000; line-height:1.2; display:flex; align-items:center;}
+    .version{font-size:calc(0.9rem * var(--scale)); color:#ffffff; font-weight:bold; margin-left:8px; background:#e74c3c; padding:3px 8px; border-radius:6px; text-shadow:0 1px 2px rgba(0,0,0,0.3); flex-shrink:0;}
     .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     #langSwitch{
       background:rgba(255,255,255,.8); color:#000; border:1px solid rgba(0,0,0,.25);
@@ -100,6 +100,8 @@
     .card.family{   background:linear-gradient(180deg,var(--family1),var(--family2)); }
 
     .card-header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+    .modal .card-header{justify-content:center; position:relative;}
+    .modal .card-header .actions{position:absolute; right:0;}
     .card-title{display:flex; align-items:center; gap:10px; font-weight:800; color:#000}
     .accent-dot{width:10px; height:10px; border-radius:50%}
     .grocery .accent-dot{background:#10b981}
@@ -181,6 +183,7 @@
       width:100%; background:#ffffff; color:var(--ink); border:1px solid var(--border);
       padding:8px 10px; border-radius:10px; font-size:calc(1rem * var(--scale))
     }
+    input[type="date"] { text-align: left; }
     input::placeholder{color:#8391ab}
 
     .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -194,15 +197,15 @@
       pointer-events: none;
     }
     .panel{
-      width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
+      width:auto; min-width:400px; max-width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
       border:1px solid var(--border); border-radius:16px; padding:14px; box-shadow:0 10px 26px rgba(0,0,0,.2)
     }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
     
     /* 2-column form layout */
-    .form-grid{display:grid; grid-template-columns:120px 1fr; gap:8px 12px; align-items:center;}
-    .form-grid label{display:flex; align-items:center; gap:8px; font-weight:600; margin:0;}
+    .form-grid{display:grid; grid-template-columns:auto 1fr; gap:8px 12px; align-items:center; max-width:400px; margin:0 auto; justify-self:center;}
+    .form-grid label{display:flex; align-items:center; gap:8px; font-weight:600; margin:0; justify-content:flex-end; text-align:right;}
     .form-grid input, .form-grid select{width:200px; max-width:200px;}
     .form-grid .full-width{grid-column:1 / -1;}
     .form-grid .full-width input{width:100%; max-width:100%;}
@@ -273,11 +276,47 @@
 
     @keyframes shake{ 0%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
     .mandatory-missing{border:2px solid var(--bad)!important; animation:shake .3s ease-in-out 0s 2; box-shadow:0 0 0 3px rgba(216,75,75,.08)}
+
+    /* Error notification styles */
+    .error-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ff4444;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      font-weight: 500;
+      max-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .error-notification.hide {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+
+    /* Modal blocking overlay during processing */
+    .modal.processing {
+      pointer-events: none;
+    }
+    .modal.processing .panel {
+      opacity: 0.8;
+    }
     .header-filters{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 14px; }
     .header-filters .filter-label{ font-weight:800; color:var(--ink); }
     .header-filters input[type="date"]{ width:auto; min-width:9.5ch; padding:6px 8px; font-size:calc(.95rem * var(--scale)); }
     .header-filters .arrow{ opacity:.7; }
     .header-filters .clear-btn{ background:#eef2f9; border:1px solid var(--border); color:#000; }
+    .version-badge{ font-size:calc(0.75rem * var(--scale)); color:#ffffff; font-weight:bold; background:#e74c3c; padding:2px 6px; border-radius:4px; text-shadow:0 1px 1px rgba(0,0,0,0.3); margin-left:auto; }
   </style>
 </head>
 <body>
@@ -323,7 +362,6 @@
     <header>
       <div class="title-section">
         <div class="title" id="appTitle">Money Tracker</div>
-        <div class="version">v1.0</div>
       </div>
       <div class="header-right">
         <input type="file" id="importExcel" accept=".xlsx,.xls" style="display:none">
@@ -363,6 +401,7 @@
         <span class="arrow">→</span>
         <input type="date" id="filterEnd" title="End date">
         <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
+        <span class="version-badge">v1.5</span>
       </div>
 
       <!-- WORK -->
@@ -470,8 +509,8 @@
           <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
         </select>
         
-        <label id="lblWNotes" class="full-width">Notes</label>
-        <input id="wNotes" type="text" class="full-width">
+        <label id="lblWNotes">Notes</label>
+        <input id="wNotes" type="text">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addWagesRow" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -522,9 +561,10 @@
           <option value="6514">6514</option>
         </select>
         
-        <label id="lblGNotes" class="full-width">Notes</label>
-        <input id="gNotes" type="text" class="full-width">
-        
+        <label id="lblGNotes">Notes</label>
+        <input id="gNotes" type="text">
+      </div>
+      <div style="margin-top:8px;padding:0 10px;text-align:center;">
         <input type="file" id="receiptFile" accept="image/*" style="display:none">
         <button class="btn upload-btn" id="attachReceiptBtn">📎 Upload</button>
       </div>
@@ -553,8 +593,8 @@
           <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
         </select>
         
-        <label id="lblRNotes" class="full-width">Notes</label>
-        <input id="rNotes" type="text" class="full-width">
+        <label id="lblRNotes">Notes</label>
+        <input id="rNotes" type="text">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
         <button class="btn good" id="addReimbOnlyRowSubmit" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
@@ -605,9 +645,10 @@
           <option value="6514">6514</option>
         </select>
         
-        <label id="lblFNotes" class="full-width">Notes</label>
-        <input id="fNotes" type="text" class="full-width">
-        
+        <label id="lblFNotes">Notes</label>
+        <input id="fNotes" type="text">
+      </div>
+      <div style="margin-top:8px;padding:0 10px;text-align:center;">
         <input type="file" id="familyFile" accept="image/*" style="display:none">
         <button class="btn upload-btn" id="attachFamilyBtn">📎 Upload</button>
       </div>
@@ -974,6 +1015,67 @@ function setButtonLoading(buttonId, isLoading) {
   }
 }
 
+/* ===== Enhanced Submission Protection ===== */
+let isSubmitting = false;
+
+function startSubmission(modalId, buttonId) {
+  if (isSubmitting) return false; // Prevent double submission
+  
+  isSubmitting = true;
+  setButtonLoading(buttonId, true);
+  
+  // Block modal interactions
+  const modal = byId(modalId);
+  if (modal) modal.classList.add("processing");
+  
+  return true;
+}
+
+function endSubmission(modalId, buttonId, success = true) {
+  isSubmitting = false;
+  setButtonLoading(buttonId, false);
+  
+  // Unblock modal interactions
+  const modal = byId(modalId);
+  if (modal) modal.classList.remove("processing");
+  
+  if (!success) {
+    showErrorNotification("Submission failed. Please try again.");
+  }
+}
+
+function showErrorNotification(message) {
+  // Remove any existing notifications
+  const existing = document.querySelector(".error-notification");
+  if (existing) existing.remove();
+  
+  // Create new notification
+  const notification = document.createElement("div");
+  notification.className = "error-notification";
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.classList.add("hide");
+      setTimeout(() => notification.remove(), 300);
+    }
+  }, 5000);
+}
+
+async function safeSubmit(modalId, buttonId, submitFunction) {
+  if (!startSubmission(modalId, buttonId)) return;
+  
+  try {
+    await submitFunction();
+    endSubmission(modalId, buttonId, true);
+  } catch (error) {
+    console.error("Submission error:", error);
+    endSubmission(modalId, buttonId, false);
+  }
+}
+
 function today(){ 
   // Get current date in Pacific timezone (PST/PDT) properly for HTML date inputs
   const now = new Date();
@@ -1239,6 +1341,12 @@ async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
     return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
   }
 
+  // Ensure user is authenticated for storage uploads
+  if (!currentUser) {
+    console.warn("No authenticated user for storage upload, falling back to data URL");
+    return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
+  }
+
   let blob, ext = "png";
   if (typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:")) {
     const res = await fetch(fileOrDataUrl);
@@ -1249,14 +1357,23 @@ async function uploadReceiptToStorage(fileOrDataUrl, folder = "work") {
     ext = (blob?.type || "image/png").split("/")[1] || "png";
   }
 
-  const path = `shared/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await supabase.storage.from("receipts").upload(path, blob, { upsert: false });
-  if (error) {
+  // Use user ID for folder organization to match RLS policies
+  const userFolder = currentUser.id;
+  const path = `${userFolder}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  
+  try {
+    const { data, error } = await supabase.storage.from("receipts").upload(path, blob, { upsert: false });
+    if (error) {
+      console.error("Storage upload error:", error);
+      return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
+    }
+
+    const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
+    return pub.publicUrl;
+  } catch (e) {
+    console.error("Storage upload failed:", e);
     return typeof fileOrDataUrl === "string" ? fileOrDataUrl : await fileToDataURL(fileOrDataUrl);
   }
-
-  const { data: pub } = supabase.storage.from("receipts").getPublicUrl(path);
-  return pub.publicUrl;
 }
 
 /* ===== DB mapping + CRUD ===== */
@@ -1413,6 +1530,9 @@ async function loadFromDBAndRender() {
     
     const totalTime = performance.now() - startTime;
     console.log(`Total data load completed in ${totalTime.toFixed(0)}ms`);
+    
+    // Migrate legacy image paths (runs in background)
+    migrateLegacyImagePaths().catch(e => console.warn("Migration warning:", e));
     
     saveAll();
     renderAll();
@@ -1685,28 +1805,20 @@ document.addEventListener("click",async (e)=>{
     if (amountNorm === null){ $("#wAmount").classList.add("mandatory-missing"); return; }
     $("#wAmount").value = fmtAutoPlain(amountNorm);
 
-    setButtonLoading("addWagesRow", true);
+    await safeSubmit("wagesModal", "addWagesRow", async () => {
+      const editIdx = $("#wagesModal").dataset.editIdx;
+      const existingId = editIdx!=="" ? wagesRows[+editIdx]?.id : undefined;
+      const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value};
 
-    const editIdx = $("#wagesModal").dataset.editIdx;
-    const existingId = editIdx!=="" ? wagesRows[+editIdx]?.id : undefined;
-    const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value};
-
-    if (currentUser) {
-      try { 
+      if (currentUser) {
         const saved = await upsertRow(T_WAGES, mapWageUIToDB(obj)); 
         obj.id = saved.id; 
       }
-      catch(e){ 
-        console.error(e);
-        setButtonLoading("addWagesRow", false);
-        return;
-      }
-    }
 
-    if(editIdx!=="") wagesRows[+editIdx]=obj; else wagesRows.push(obj);
-    renderWages(); saveAll(); 
-    setButtonLoading("addWagesRow", false);
-    $("#wagesModal").classList.remove("open"); removeBlurEffect();
+      if(editIdx!=="") wagesRows[+editIdx]=obj; else wagesRows.push(obj);
+      renderWages(); saveAll(); 
+      $("#wagesModal").classList.remove("open"); removeBlurEffect();
+    });
   }
 
   // Work / Grocery
@@ -1723,42 +1835,30 @@ document.addEventListener("click",async (e)=>{
     const method = $("#gPayMethod").value || "Credit Card";
     if(method.includes("Card") && !validate($("#gCardLast4"))){return;}
 
-    setButtonLoading("addReceipt", true);
+    await safeSubmit("receiptModal", "addReceipt", async () => {
+      const editIdx = $("#receiptModal").dataset.editIdx;
+      const existingId = editIdx!=="" ? reimbRows[+editIdx]?.id : undefined;
 
-    const editIdx = $("#receiptModal").dataset.editIdx;
-    const existingId = editIdx!=="" ? reimbRows[+editIdx]?.id : undefined;
-
-    let receiptUrl = pendingReceiptImage;
-    if (currentUser && pendingReceiptImage) {
-      try { 
+      let receiptUrl = pendingReceiptImage;
+      if (currentUser && pendingReceiptImage) {
         receiptUrl = await uploadReceiptToStorage(pendingReceiptImage, "work"); 
-      } catch (e) {
-        console.error(e);
       }
-    }
 
-    const obj={ id: existingId,
-                date:$("#gDate").value,vendor:$("#gVendor").value,expense:amt,
-                payMethod:method,cardLast4:$("#gCardLast4").value,notes:$("#gNotes").value,
-                receiptImg: receiptUrl || null, receiptName: pendingReceiptName || ""};
+      const obj={ id: existingId,
+                  date:$("#gDate").value,vendor:$("#gVendor").value,expense:amt,
+                  payMethod:method,cardLast4:$("#gCardLast4").value,notes:$("#gNotes").value,
+                  receiptImg: receiptUrl || null, receiptName: pendingReceiptName || ""};
 
-    if (currentUser) {
-      try { 
+      if (currentUser) {
         const saved = await upsertRow(T_WORK, mapWorkUIToDB(obj)); 
         obj.id = saved.id; 
       }
-      catch(e){ 
-        console.error(e);
-        setButtonLoading("addReceipt", false);
-        return;
-      }
-    }
 
-    if(editIdx!=="") reimbRows[+editIdx]=obj; else reimbRows.push(obj);
-    pendingReceiptImage = null; pendingReceiptName = "";
-    renderReimb(); saveAll(); 
-    setButtonLoading("addReceipt", false);
-    $("#receiptModal").classList.remove("open"); removeBlurEffect();
+      if(editIdx!=="") reimbRows[+editIdx]=obj; else reimbRows.push(obj);
+      pendingReceiptImage = null; pendingReceiptName = "";
+      renderReimb(); saveAll(); 
+      $("#receiptModal").classList.remove("open"); removeBlurEffect();
+    });
   }
 
   // Reimbursement only
@@ -1770,28 +1870,20 @@ document.addEventListener("click",async (e)=>{
     if (amt === null){ $("#rAmount").classList.add("mandatory-missing"); return; }
     $("#rAmount").value = fmtAutoPlain(amt);
 
-    setButtonLoading("addReimbOnlyRowSubmit", true);
+    await safeSubmit("reimbOnlyModal", "addReimbOnlyRowSubmit", async () => {
+      const editIdx = $("#reimbOnlyModal").dataset.editIdx;
+      const existingId = editIdx!=="" ? reimbOnlyRows[+editIdx]?.id : undefined;
+      const obj={ id: existingId, date:$("#rDate").value,amount:amt,method:$("#rMethod").value||"Cash",notes:$("#rNotes").value };
 
-    const editIdx = $("#reimbOnlyModal").dataset.editIdx;
-    const existingId = editIdx!=="" ? reimbOnlyRows[+editIdx]?.id : undefined;
-    const obj={ id: existingId, date:$("#rDate").value,amount:amt,method:$("#rMethod").value||"Cash",notes:$("#rNotes").value };
-
-    if (currentUser) {
-      try { 
+      if (currentUser) {
         const saved = await upsertRow(T_REIMB, mapReimbOnlyUIToDB(obj)); 
         obj.id = saved.id; 
       }
-      catch(e){ 
-        console.error(e);
-        setButtonLoading("addReimbOnlyRowSubmit", false);
-        return;
-      }
-    }
 
-    if(editIdx!=="") reimbOnlyRows[+editIdx]=obj; else reimbOnlyRows.push(obj);
-    renderReimbOnly(); saveAll(); 
-    setButtonLoading("addReimbOnlyRowSubmit", false);
-    $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect();
+      if(editIdx!=="") reimbOnlyRows[+editIdx]=obj; else reimbOnlyRows.push(obj);
+      renderReimbOnly(); saveAll(); 
+      $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect();
+    });
   }
 
   // Family
@@ -1808,42 +1900,30 @@ document.addEventListener("click",async (e)=>{
     const method = $("#fPayMethod").value || "Credit Card";
     if(method.includes("Card") && !validate($("#fCardLast4"))){return;}
 
-    setButtonLoading("addFamilySubmit", true);
+    await safeSubmit("familyModal", "addFamilySubmit", async () => {
+      const editIdx = $("#familyModal").dataset.editIdx;
+      const existingId = editIdx!=="" ? homeRows[+editIdx]?.id : undefined;
 
-    const editIdx = $("#familyModal").dataset.editIdx;
-    const existingId = editIdx!=="" ? homeRows[+editIdx]?.id : undefined;
-
-    let receiptUrl = pendingFamilyImage;
-    if (currentUser && pendingFamilyImage) {
-      try { 
+      let receiptUrl = pendingFamilyImage;
+      if (currentUser && pendingFamilyImage) {
         receiptUrl = await uploadReceiptToStorage(pendingFamilyImage, "family"); 
-      } catch (e) {
-        console.error(e);
       }
-    }
 
-    const obj={ id: existingId,
-                date:$("#fDate").value,vendor:$("#fVendor").value,expense:amt,
-                payMethod:method,cardLast4:$("#fCardLast4").value,notes:$("#fNotes").value,
-                receiptImg: receiptUrl || null, receiptName: pendingFamilyName || "" };
+      const obj={ id: existingId,
+                  date:$("#fDate").value,vendor:$("#fVendor").value,expense:amt,
+                  payMethod:method,cardLast4:$("#fCardLast4").value,notes:$("#fNotes").value,
+                  receiptImg: receiptUrl || null, receiptName: pendingFamilyName || "" };
 
-    if (currentUser) {
-      try { 
+      if (currentUser) {
         const saved = await upsertRow(T_FAMILY, mapFamilyUIToDB(obj)); 
         obj.id = saved.id; 
       }
-      catch(e){ 
-        console.error(e);
-        setButtonLoading("addFamilySubmit", false);
-        return;
-      }
-    }
 
-    if(editIdx!=="") homeRows[+editIdx]=obj; else homeRows.push(obj);
-    pendingFamilyImage = null; pendingFamilyName = "";
-    renderHome(); saveAll(); 
-    setButtonLoading("addFamilySubmit", false);
-    $("#familyModal").classList.remove("open"); removeBlurEffect();
+      if(editIdx!=="") homeRows[+editIdx]=obj; else homeRows.push(obj);
+      pendingFamilyImage = null; pendingFamilyName = "";
+      renderHome(); saveAll(); 
+      $("#familyModal").classList.remove("open"); removeBlurEffect();
+    });
   }
 
   // Edit via modals
@@ -1863,7 +1943,7 @@ document.addEventListener("click",async (e)=>{
     const type = btn.dataset.type || "reimb";
     const srcRow = type==="home" ? homeRows[i] : reimbRows[i];
     if(srcRow && srcRow.receiptImg){
-      $("#previewImg").src = cleanAttachmentUrl(srcRow.receiptImg);
+      await displayReceiptImage(srcRow.receiptImg);
       $("#receiptPreviewModal").classList.add("open");
       addBlurEffect();
     }
@@ -1931,7 +2011,7 @@ byId("familyFile")?.addEventListener("change", async (e) => {
 function rowClickOpener(tbodyId, rowsArr, type){
   const tb = byId(tbodyId);
   if (!tb) return;
-  tb.addEventListener("click",(e)=>{
+  tb.addEventListener("click",async (e)=>{
     const target = e.target;
     if (target.closest("button") || target.closest(".icon-btn") || target.tagName === "SVG" || target.tagName === "PATH") return;
     const tr = target.closest("tr");
@@ -1939,7 +2019,7 @@ function rowClickOpener(tbodyId, rowsArr, type){
     const i = +tr.dataset.i;
     const row = rowsArr[i];
     if (row && row.receiptImg){
-      $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
+      await displayReceiptImage(row.receiptImg);
       $("#receiptPreviewModal").classList.add("open");
       addBlurEffect();
     }
@@ -1947,10 +2027,10 @@ function rowClickOpener(tbodyId, rowsArr, type){
 }
 rowClickOpener("reimbBody", reimbRows, "reimb");
 
-function enhancedRowClickFallback(rowsArr, i){
+async function enhancedRowClickFallback(rowsArr, i){
   const row = rowsArr[i];
   if (row && row.receiptImg){
-    $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
+    await displayReceiptImage(row.receiptImg);
     $("#receiptPreviewModal").classList.add("open");
     addBlurEffect();
     return true;
@@ -1962,7 +2042,7 @@ function enhancedRowClickFallback(rowsArr, i){
   function bind(defTbodyId, arr){
     const tb = byId(defTbodyId);
     if (!tb) return;
-    tb.addEventListener("click",(e)=>{
+    tb.addEventListener("click",async (e)=>{
       const target = e.target;
       if (target.closest("button") || target.closest(".icon-btn") || target.tagName === "SVG" || target.tagName === "PATH") return;
       const tr = target.closest("tr");
@@ -1970,11 +2050,11 @@ function enhancedRowClickFallback(rowsArr, i){
       const i = +tr.dataset.i;
       const has = tr.dataset.hasAttachment === "true";
       if (has){
-        if (!enhancedRowClickFallback(arr, i)){
+        if (!(await enhancedRowClickFallback(arr, i))){
           // Fallback: try to read from row element if an inline src was ever placed (future-proof)
           const src = tr.getAttribute("data-receipt-src");
           if (src){
-            $("#previewImg").src = cleanAttachmentUrl(src);
+            await displayReceiptImage(src);
             $("#receiptPreviewModal").classList.add("open");
             addBlurEffect();
           }
@@ -2150,6 +2230,149 @@ function cleanAttachmentUrl(u){
   return url;
 }
 
+/* ===== Migrate legacy image paths ===== */
+async function migrateLegacyImagePaths() {
+  if (!currentUser) return;
+  
+  // Check if migration has already been run for this user
+  const migrationKey = `migration_completed_${currentUser.id}`;
+  if (localStorage.getItem(migrationKey)) {
+    console.log("Legacy image path migration already completed for this user");
+    return;
+  }
+  
+  try {
+    console.log("Starting migration of legacy image paths...");
+    
+    // Get all records that might have old image paths
+    const tables = ['work_expense', 'family_expense'];
+    let totalUpdated = 0;
+    
+    for (const table of tables) {
+      const { data: records, error } = await supabase
+        .from(table)
+        .select('id, receipt_img')
+        .eq('user_id', currentUser.id)
+        .not('receipt_img', 'is', null)
+        .like('receipt_img', '%/receipts/shared/%');
+      
+      if (error) {
+        console.warn(`Error fetching ${table} records:`, error);
+        continue;
+      }
+      
+      if (records && records.length > 0) {
+        console.log(`Found ${records.length} records in ${table} with legacy paths`);
+        
+        for (const record of records) {
+          if (record.receipt_img && record.receipt_img.includes('/receipts/shared/')) {
+            // Convert old path to new path
+            const newPath = record.receipt_img.replace('/receipts/shared/', `/receipts/${currentUser.id}/`);
+            
+            // Update the database record
+            const { error: updateError } = await supabase
+              .from(table)
+              .update({ receipt_img: newPath })
+              .eq('id', record.id);
+            
+            if (updateError) {
+              console.warn(`Failed to update ${table} record ${record.id}:`, updateError);
+            } else {
+              console.log(`Updated ${table} record ${record.id} path`);
+              totalUpdated++;
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`Legacy image path migration completed. Updated ${totalUpdated} records.`);
+    
+    // Mark migration as completed for this user
+    localStorage.setItem(migrationKey, 'true');
+    
+  } catch (e) {
+    console.error("Error during legacy image path migration:", e);
+  }
+}
+
+/* ===== Get authenticated storage URL for receipt images ===== */
+async function getAuthenticatedImageUrl(receiptImg) {
+  if (!receiptImg || typeof receiptImg !== "string") return receiptImg;
+  if (receiptImg.startsWith("data:")) return receiptImg;
+  
+  // Handle both old and new path formats
+  if (receiptImg.includes('supabase') && receiptImg.includes('/storage/v1/object/public/receipts/') && currentUser) {
+    try {
+      // Extract the path from the public URL
+      const pathMatch = receiptImg.match(/\/storage\/v1\/object\/public\/receipts\/(.+)$/);
+      if (pathMatch) {
+        let filePath = pathMatch[1];
+        
+        // If it's an old path (starts with 'shared/'), convert to new user-specific path
+        if (filePath.startsWith('shared/')) {
+          filePath = filePath.replace('shared/', `${currentUser.id}/`);
+        }
+        
+        // Try to get signed URL for the (potentially converted) path
+        const { data, error } = await supabase.storage
+          .from('receipts')
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
+        
+        if (!error && data?.signedUrl) {
+          console.log("Successfully got signed URL for:", filePath);
+          return data.signedUrl;
+        } else {
+          console.warn("Failed to get signed URL:", error?.message);
+          // Fall back to trying the original path structure if conversion failed
+          if (filePath !== pathMatch[1]) {
+            const { data: fallbackData, error: fallbackError } = await supabase.storage
+              .from('receipts')
+              .createSignedUrl(pathMatch[1], 3600);
+            
+            if (!fallbackError && fallbackData?.signedUrl) {
+              console.log("Fallback signed URL successful for:", pathMatch[1]);
+              return fallbackData.signedUrl;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to get signed URL, using public URL:", e);
+    }
+  }
+  
+  return cleanAttachmentUrl(receiptImg);
+}
+
+/* ===== Enhanced image display with error handling ===== */
+async function displayReceiptImage(receiptImg) {
+  const previewImg = byId("previewImg");
+  if (!previewImg) return;
+  
+  try {
+    console.log("Attempting to load image:", receiptImg);
+    const imageUrl = await getAuthenticatedImageUrl(receiptImg);
+    
+    // Add error handling for image load
+    previewImg.onerror = () => {
+      console.warn("Failed to load receipt image:", imageUrl);
+      previewImg.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NS41IDc1QzQ3LjUgNzUgMTcuNSA0NSAxNy41IDQ1SDE3NS41QzE3NS41IDQ1IDE0NS41IDc1IDEwNy41IDc1SDE3NS41VjEyMEgxNy41Vjc1SDg1LjVaIiBmaWxsPSIjRDFENTk5Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjYwIiByPSIxNSIgZmlsbD0iI0Q5RDlEOSIvPgo8dGV4dCB4PSI1MCUiIHk9IjkwIiBmaWxsPSIjNjc3Mjg5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K";
+      previewImg.alt = "Receipt image unavailable - please check storage configuration";
+    };
+    
+    previewImg.onload = () => {
+      console.log("Receipt image loaded successfully");
+    };
+    
+    previewImg.src = imageUrl;
+  } catch (e) {
+    console.error("Error displaying receipt image:", e);
+    previewImg.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NS41IDc1QzQ3LjUgNzUgMTcuNSA0NSAxNy41IDQ1SDE3NS41QzE3NS41IDQ1IDE0NS41IDc1IDEwNy41IDc1SDE3NS41VjEyMEgxNy41Vjc1SDg1LjVaIiBmaWxsPSIjRDFENTk5Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjYwIiByPSIxNSIgZmlsbD0iI0Q5RDlEOSIvPgo8dGV4dCB4PSI1MCUiIHk9IjkwIiBmaWxsPSIjNjc3Mjg5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIFVuYXZhaWxhYmxlPC90ZXh0Pgo8L3N2Zz4K";
+    showErrorNotification("Failed to load receipt image");
+  }
+}
+
 /* ===== Init ===== */
 document.getElementById("langSwitch").value="en";
 setLang("en");
@@ -2163,10 +2386,16 @@ document.getElementById("importExcel").addEventListener("change", e=>{
 });
 
 (async () => {
+  console.log("🚀 Money Tracker v1.5 - Application Starting");
+  console.log("📅 Build Date:", new Date().toISOString());
+  console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Auto-Width Modals, Version in Filter Area");
+  
   await getSessionUser();
   toggleUI();
   if (currentUser) await loadFromDBAndRender();
   preflightStorage();
+  
+  console.log("✅ Money Tracker v1.5 - Application Ready");
 })();
 </script>
 
