@@ -211,6 +211,16 @@
       justify-content: center;
       z-index: 10000;
     }
+    .loading-overlay.loading-active {
+      display: flex;
+    }
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
     .loading-spinner {
       width: 50px;
       height: 50px;
@@ -218,6 +228,7 @@
       border-top: 4px solid #3498db;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      margin: 0 auto;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -227,6 +238,8 @@
       color: white;
       margin-top: 15px;
       font-size: calc(1rem * var(--scale));
+      text-align: center;
+      font-weight: 500;
     }
     .btn.loading {
       position: relative;
@@ -263,6 +276,12 @@
     <div class="auth-card">
       <h1>Sign in</h1>
       <p>Use your email and password to access your data.</p>
+      
+      <!-- Multi-device warning -->
+      <div id="multiDeviceWarning" style="background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px; padding:10px; margin:10px 0; font-size:0.9em;">
+        ⚠️ Notice: Using the same login on multiple devices simultaneously may cause data synchronization issues. Please sign out from other devices before logging in here.
+      </div>
+      
       <form id="authLoginForm" class="auth-grid">
         <div>
           <label>Email
@@ -300,7 +319,7 @@
 
         <div class="font-zoom">
           <button id="fsDown" class="mini-btn" title="Smaller">A−</button>
-          <input id="fsSlider" type="range" min="60" max="150" value="70" step="5" />
+          <input id="fsSlider" type="range" min="60" max="200" value="70" step="5" />
           <button id="fsUp" class="mini-btn" title="Larger">A+</button>
         </div>
 
@@ -458,7 +477,7 @@
           <option value="">Select...</option>
           <option value="8208">8208</option>
           <option value="7443">7443</option>
-          <option value="8208">8208</option>
+          <option value="6514">6514</option>
         </select></label></div>
 
         <input type="file" id="receiptFile" accept="image/*" style="display:none">
@@ -512,7 +531,7 @@
           <option value="">Select...</option>
           <option value="8208">8208</option>
           <option value="7443">7443</option>
-          <option value="8208">8208</option>
+          <option value="6514">6514</option>
         </select></label></div>
 
         <input type="file" id="familyFile" accept="image/*" style="display:none">
@@ -541,7 +560,7 @@
 
   <!-- Loading overlay -->
   <div class="loading-overlay" id="loadingOverlay">
-    <div style="text-align: center;">
+    <div class="loading-content">
       <div class="loading-spinner"></div>
       <div class="loading-text" id="loadingText">Processing...</div>
     </div>
@@ -679,6 +698,7 @@ const langStrings = {
     submit: "Submit",
     signOut: "Sign out",
     clear: "Clear",
+    multiDeviceWarning: "⚠️ Notice: Using the same login on multiple devices simultaneously may cause data synchronization issues. Please sign out from other devices before logging in here.",
     cash: "Cash", check: "Check", zelle: "Zelle", other: "Other",
     creditCard: "Credit Card", debitCard: "Debit Card"
   },
@@ -700,6 +720,7 @@ const langStrings = {
     submit: "Gửi",
     signOut: "Đăng xuất",
     clear: "Xóa",
+    multiDeviceWarning: "⚠️ Lưu ý: Sử dụng cùng một tài khoản trên nhiều thiết bị cùng lúc có thể gây ra lỗi đồng bộ dữ liệu. Vui lòng đăng xuất khỏi các thiết bị khác trước khi đăng nhập tại đây.",
     cash: "Tiền mặt", check: "Séc", zelle: "Zelle", other: "Khác",
     creditCard: "Thẻ tín dụng", debitCard: "Thẻ ghi nợ"
   }
@@ -773,6 +794,9 @@ function setLang(code){
   // Sign out and clear buttons
   byId("signOutBtn")?.replaceChildren(t.signOut);
   byId("clearDateFilter")?.replaceChildren(t.clear);
+
+  // Multi-device warning
+  byId("multiDeviceWarning")?.replaceChildren(t.multiDeviceWarning);
 
   renderAll();
 }
@@ -879,7 +903,7 @@ function setButtonLoading(buttonId, isLoading) {
 }
 
 function today(){ 
-  // Get current date in Pacific timezone (PST/PDT) properly
+  // Get current date in Pacific timezone (PST/PDT) properly for HTML date inputs
   const now = new Date();
   
   // Use Intl.DateTimeFormat to get the date parts in Pacific timezone
@@ -890,7 +914,27 @@ function today(){
     day: '2-digit'
   });
   
-  return formatter.format(now); // Returns YYYY-MM-DD format
+  return formatter.format(now); // Returns YYYY-MM-DD format for HTML date inputs
+}
+
+function todayDisplay(){ 
+  // Get current date in Pacific timezone formatted for mobile display
+  const now = new Date();
+  
+  // Use Intl.DateTimeFormat to get the date parts in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const month = parts.find(part => part.type === 'month').value;
+  const day = parts.find(part => part.type === 'day').value;
+  const year = parts.find(part => part.type === 'year').value;
+  
+  return `${month}/${day}/${year}`; // Returns MM/DD/YYYY format for mobile compatibility
 }
 
 function isValidMoney(s){
@@ -1548,9 +1592,9 @@ const fsSlider = $("#fsSlider"), fsDown=$("#fsDown"), fsUp=$("#fsUp");
 function applyScale(val){ document.documentElement.style.setProperty("--scale", (val/100).toString()); localStorage.setItem(SCALE_KEY, String(val)); }
 function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 fsSlider?.addEventListener("input", ()=> applyScale(+fsSlider.value));
-fsDown?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value-5, 60, 150); applyScale(+fsSlider.value); });
-fsUp?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value+5, 60, 150); applyScale(+fsSlider.value); });
-const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider")) { byId("fsSlider").value = clamp(savedScale,60,150); applyScale(+byId("fsSlider").value); }
+fsDown?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value-5, 60, 200); applyScale(+fsSlider.value); });
+fsUp?.addEventListener("click", ()=>{ fsSlider.value = clamp(+fsSlider.value+5, 60, 200); applyScale(+fsSlider.value); });
+const savedScale = +(localStorage.getItem(SCALE_KEY) || 70); if (byId("fsSlider")) { byId("fsSlider").value = clamp(savedScale,60,200); applyScale(+byId("fsSlider").value); }
 
 /* ===== Click handlers (CRUD wired) ===== */
 document.addEventListener("click",async (e)=>{
