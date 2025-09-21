@@ -181,14 +181,72 @@
     }
     input::placeholder{color:#8391ab}
 
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:9999}
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
     .modal.open{display:flex}
+    .modal.open ~ .container, .modal.open ~ header { filter:blur(2px); pointer-events:none; }
+    
+    /* When any modal is open, blur the background content */
+    body:has(.modal.open) .container,
+    body:has(.modal.open) header {
+      filter: blur(2px);
+      pointer-events: none;
+    }
     .panel{
       width:min(92vw,560px); background:linear-gradient(180deg,#f7f9fc,#eef3fb);
       border:1px solid var(--border); border-radius:16px; padding:14px; box-shadow:0 10px 26px rgba(0,0,0,.2)
     }
     .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:10px}
     .grid>div{grid-column:span 12} @media(min-width:640px){.grid>div{grid-column:span 6}}
+
+    /* Loading styles */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+      color: white;
+      margin-top: 15px;
+      font-size: calc(1rem * var(--scale));
+    }
+    .btn.loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .btn.loading:after {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      margin: auto;
+      border: 2px solid transparent;
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 
     @keyframes shake{ 0%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
     .mandatory-missing{border:2px solid var(--bad)!important; animation:shake .3s ease-in-out 0s 2; box-shadow:0 0 0 3px rgba(216,75,75,.08)}
@@ -375,8 +433,8 @@
           </select></label></div>
         <div style="grid-column:span 12"><label id="lblWNotes">Notes<input id="wNotes" type="text"></label></div>
       </div>
-      <div class="actions" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn good" id="addWagesRow">Submit</button>
+      <div class="actions" style="justify-content:center;margin-top:8px">
+        <button class="btn good" id="addWagesRow" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
       </div>
     </div>
   </div>
@@ -399,11 +457,11 @@
         <div><label id="lblGCard">Last 4<input id="gCardLast4" type="text" maxlength="4"></label></div>
 
         <input type="file" id="receiptFile" accept="image/*" style="display:none">
-        <button class="btn" id="attachReceiptBtn">📎 Upload</button>
+        <button class="btn" id="attachReceiptBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
         <div style="grid-column:span 12"><label id="lblGNotes">Notes<input id="gNotes" type="text"></label></div>
       </div>
-      <div class="actions" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn good" id="addReceipt">Submit</button>
+      <div class="actions" style="justify-content:center;margin-top:8px">
+        <button class="btn good" id="addReceipt" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
       </div>
     </div>
   </div>
@@ -424,8 +482,8 @@
           </select></label></div>
         <div style="grid-column:span 12"><label id="lblRNotes">Notes<input id="rNotes" type="text"></label></div>
       </div>
-      <div class="actions" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn good" id="addReimbOnlyRowSubmit">Submit</button>
+      <div class="actions" style="justify-content:center;margin-top:8px">
+        <button class="btn good" id="addReimbOnlyRowSubmit" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
       </div>
     </div>
   </div>
@@ -448,12 +506,12 @@
         <div><label id="lblFCard">Last 4<input id="fCardLast4" type="text" maxlength="4"></label></div>
 
         <input type="file" id="familyFile" accept="image/*" style="display:none">
-        <button class="btn" id="attachFamilyBtn">📎 Upload</button>
+        <button class="btn" id="attachFamilyBtn" style="min-width:150px;white-space:nowrap;">📎 Upload</button>
 
         <div style="grid-column:span 12"><label id="lblFNotes">Notes<input id="fNotes" type="text"></label></div>
       </div>
-      <div class="actions" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn good" id="addFamilySubmit">Submit</button>
+      <div class="actions" style="justify-content:center;margin-top:8px">
+        <button class="btn good" id="addFamilySubmit" style="font-size:calc(1.1rem * var(--scale));padding:10px 20px;min-width:120px;">Submit</button>
       </div>
     </div>
   </div>
@@ -468,6 +526,14 @@
       <div style="text-align:center">
         <img id="previewImg" src="" alt="Receipt Image" style="max-width:100%; max-height:70vh; border-radius:10px;"/>
       </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div style="text-align: center;">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Processing...</div>
     </div>
   </div>
 
@@ -599,7 +665,10 @@ const langStrings = {
     confirmDeleteMsg: "Are you sure you want to delete this row?",
     cancel: "Cancel",
     delete: "Delete",
-    receiptAttachment: "Receipt Attachment"
+    receiptAttachment: "Receipt Attachment",
+    submit: "Submit",
+    cash: "Cash", check: "Check", zelle: "Zelle", other: "Other",
+    creditCard: "Credit Card", debitCard: "Debit Card"
   },
   vi: {
     appTitle: "Theo dõi tiền",
@@ -615,7 +684,10 @@ const langStrings = {
     confirmDeleteMsg: "Bạn có chắc muốn xoá dòng này?",
     cancel: "Hủy",
     delete: "Xoá",
-    receiptAttachment: "Đính kèm hoá đơn"
+    receiptAttachment: "Đính kèm hoá đơn",
+    submit: "Gửi",
+    cash: "Tiền mặt", check: "Séc", zelle: "Zelle", other: "Khác",
+    creditCard: "Thẻ tín dụng", debitCard: "Thẻ ghi nợ"
   }
 };
 
@@ -639,16 +711,16 @@ function setLang(code){
   byId("familyModalTitle")?.replaceChildren(t.enterFamily);
 
   byId("wagesHead") && (byId("wagesHead").innerHTML =
-    `<th>${t.date}</th><th>${t.hours}</th><th>${t.wageAmount}</th><th>${t.method}</th><th>${t.notes}</th><th>${t.actions}</th>`);
+    `<th>${t.actions}</th><th>${t.date}</th><th>${t.hours}</th><th>${t.wageAmount}</th><th>${t.method}</th><th>${t.notes}</th>`);
 
   byId("groceryHead") && (byId("groceryHead").innerHTML =
-    `<th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th><th>${t.actions}</th>`);
+    `<th>${t.actions}</th><th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th>`);
 
   byId("reimbHead") && (byId("reimbHead").innerHTML =
-    `<th>${t.date}</th><th>${t.amount}</th><th>${t.method}</th><th>${t.notes}</th><th>${t.actions}</th>`);
+    `<th>${t.actions}</th><th>${t.date}</th><th>${t.amount}</th><th>${t.method}</th><th>${t.notes}</th>`);
 
   byId("homeHead") && (byId("homeHead").innerHTML =
-    `<th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th><th>${t.actions}</th>`);
+    `<th>${t.actions}</th><th>${t.date}</th><th>${t.store}</th><th>${t.total}</th><th>${t.method}</th><th>${t.last4}</th><th>${t.notes}</th><th>${t.attachment}</th>`);
 
   byId("attachReceiptBtn")?.replaceChildren(t.upload);
   byId("attachFamilyBtn")?.replaceChildren(t.upload);
@@ -662,6 +734,17 @@ function setLang(code){
   byId("confirmDeleteBtn")?.replaceChildren(t.delete || "Delete");
   byId("receiptAttachTitle")?.replaceChildren(t.receiptAttachment || "Receipt Attachment");
 
+  // Submit buttons
+  byId("addWagesRow")?.replaceChildren(t.submit);
+  byId("addReceipt")?.replaceChildren(t.submit);
+  byId("addReimbOnlyRowSubmit")?.replaceChildren(t.submit);
+  byId("addFamilySubmit")?.replaceChildren(t.submit);
+
+  // Update select options
+  updateSelectOptions();
+
+  // Update field labels
+  updateFieldLabels();
 
   byId("filterLabel")?.replaceChildren(t.filter);
   byId("confirmDeleteTitle")?.replaceChildren(t.confirmDeleteTitle);
@@ -672,13 +755,122 @@ function setLang(code){
 
   renderAll();
 }
+
+function updateSelectOptions(){
+  const t = langStrings[currentLang];
+  
+  // Update wage method options
+  const wMethod = byId("wMethod");
+  if (wMethod) {
+    wMethod.innerHTML = `<option>${t.cash}</option><option>${t.check}</option><option>${t.zelle}</option><option>${t.other}</option>`;
+  }
+  
+  // Update grocery payment method options
+  const gPayMethod = byId("gPayMethod");
+  if (gPayMethod) {
+    gPayMethod.innerHTML = `<option>${t.creditCard}</option><option>${t.debitCard}</option><option>${t.cash}</option><option>${t.check}</option><option>${t.other}</option>`;
+  }
+  
+  // Update reimbursement method options
+  const rMethod = byId("rMethod");
+  if (rMethod) {
+    rMethod.innerHTML = `<option>${t.cash}</option><option>${t.check}</option><option>${t.zelle}</option><option>${t.other}</option>`;
+  }
+  
+  // Update family payment method options
+  const fPayMethod = byId("fPayMethod");
+  if (fPayMethod) {
+    fPayMethod.innerHTML = `<option>${t.creditCard}</option><option>${t.debitCard}</option><option>${t.cash}</option><option>${t.check}</option><option>${t.other}</option>`;
+  }
+}
+
+function updateFieldLabels(){
+  const t = langStrings[currentLang];
+  
+  // Wages modal labels
+  if (byId("lblWDate")) byId("lblWDate").childNodes[0].textContent = t.date;
+  if (byId("lblWHours")) byId("lblWHours").childNodes[0].textContent = t.hours;
+  if (byId("lblWAmount")) byId("lblWAmount").childNodes[0].textContent = t.wageAmount;
+  if (byId("lblWMethod")) byId("lblWMethod").childNodes[0].textContent = t.method;
+  if (byId("lblWNotes")) byId("lblWNotes").childNodes[0].textContent = t.notes;
+  
+  // Receipt modal labels
+  if (byId("lblGDate")) byId("lblGDate").childNodes[0].textContent = t.date;
+  if (byId("lblGVendor")) byId("lblGVendor").childNodes[0].textContent = t.store;
+  if (byId("lblGTotal")) byId("lblGTotal").childNodes[0].textContent = t.total;
+  if (byId("lblGMethod")) byId("lblGMethod").childNodes[0].textContent = t.method;
+  if (byId("lblGCard")) byId("lblGCard").childNodes[0].textContent = t.last4;
+  if (byId("lblGNotes")) byId("lblGNotes").childNodes[0].textContent = t.notes;
+  
+  // Reimbursement modal labels
+  if (byId("lblRDate")) byId("lblRDate").childNodes[0].textContent = t.date;
+  if (byId("lblRAmount")) byId("lblRAmount").childNodes[0].textContent = t.amount;
+  if (byId("lblRMethod")) byId("lblRMethod").childNodes[0].textContent = t.method;
+  if (byId("lblRNotes")) byId("lblRNotes").childNodes[0].textContent = t.notes;
+  
+  // Family modal labels
+  if (byId("lblFDate")) byId("lblFDate").childNodes[0].textContent = t.date;
+  if (byId("lblFVendor")) byId("lblFVendor").childNodes[0].textContent = t.store;
+  if (byId("lblFTotal")) byId("lblFTotal").childNodes[0].textContent = t.total;
+  if (byId("lblFMethod")) byId("lblFMethod").childNodes[0].textContent = t.method;
+  if (byId("lblFCard")) byId("lblFCard").childNodes[0].textContent = t.last4;
+  if (byId("lblFNotes")) byId("lblFNotes").childNodes[0].textContent = t.notes;
+}
+
 document.addEventListener("DOMContentLoaded", ()=>{
   document.getElementById("langSwitch").addEventListener("change", e => setLang(e.target.value));
+  // Initialize field labels with current language
+  updateFieldLabels();
 });
 
 /* ===== UI Helpers ===== */
 function toast(msg){ /* quiet */ }
-function today(){ return new Date().toISOString().split("T")[0]; }
+
+function showLoading(text = "Processing...") {
+  const overlay = byId("loadingOverlay");
+  const textEl = byId("loadingText");
+  if (textEl) textEl.textContent = text;
+  if (overlay) overlay.style.display = "flex";
+}
+
+function hideLoading() {
+  const overlay = byId("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function setButtonLoading(buttonId, isLoading) {
+  const btn = byId(buttonId);
+  if (!btn) return;
+  
+  if (isLoading) {
+    btn.classList.add("loading");
+    btn.disabled = true;
+    btn.dataset.originalText = btn.textContent;
+    btn.textContent = "";
+  } else {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+    if (btn.dataset.originalText) {
+      btn.textContent = btn.dataset.originalText;
+      delete btn.dataset.originalText;
+    }
+  }
+}
+
+function today(){ 
+  // Get current date in Pacific timezone (PST/PDT) properly
+  const now = new Date();
+  
+  // Use Intl.DateTimeFormat to get the date parts in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  return formatter.format(now); // Returns YYYY-MM-DD format
+}
 
 function isValidMoney(s){
   return /^(0|[1-9]\d*)(\.\d{1,2})?$/.test(String(s).trim());
@@ -707,11 +899,11 @@ function td(text){ return `<td title="${(text??'').toString().replace(/"/g,'&quo
 function wagesRowEl(r,i){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    ${td(r.date)}${td(fmtAutoPlain(r.hours))}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}
     <td class="actions-cell">
       <button class="icon-btn edit-wages" title="Edit" data-i="${i}" aria-label="Edit">${pencilSVG()}</button>
       <button class="icon-btn" title="Delete" data-act="del" data-type="wages" data-i="${i}" aria-label="Delete">${trashSVG()}</button>
-    </td>`;
+    </td>
+    ${td(r.date)}${td(fmtAutoPlain(r.hours))}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}`;
   return tr;
 }
 
@@ -721,15 +913,15 @@ function reimbRowEl(r,i){
   tr.dataset.hasAttachment = (!!r.receiptImg).toString();
   if (r.receiptImg) { try { tr.setAttribute("data-receipt-src", r.receiptImg); } catch(_){} }
   tr.innerHTML=`
+    <td class="actions-cell">
+      <button class="icon-btn edit-reimb" title="Edit" data-i="${i}">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="reimb" data-i="${i}">${trashSVG()}</button>
+    </td>
     ${td(r.date)}${td(r.vendor)}${td(fmtAutoPlain(r.expense))}${td(r.payMethod)}${td(r.cardLast4)}${td(r.notes)}
     <td class="actions-cell">
       ${r.receiptImg
         ? `<button class="icon-btn view-attachment" title="View Attachment" data-i="${i}">${clipSVG()}</button>`
         : `<button class="icon-btn add-attachment" title="Add Attachment" data-i="${i}">${photoSVG()}</button>`}
-    </td>
-    <td class="actions-cell">
-      <button class="icon-btn edit-reimb" title="Edit" data-i="${i}">${pencilSVG()}</button>
-      <button class="icon-btn" title="Delete" data-act="del" data-type="reimb" data-i="${i}">${trashSVG()}</button>
     </td>`;
   return tr;
 }
@@ -740,15 +932,15 @@ function homeRowEl(r,i){
   tr.dataset.hasAttachment = (!!r.receiptImg).toString();
   if (r.receiptImg) { try { tr.setAttribute("data-receipt-src", r.receiptImg); } catch(_){} }
   tr.innerHTML=`
+    <td class="actions-cell">
+      <button class="icon-btn edit-home" title="Edit" data-i="${i}">${pencilSVG()}</button>
+      <button class="icon-btn" title="Delete" data-act="del" data-type="home" data-i="${i}">${trashSVG()}</button>
+    </td>
     ${td(r.date)}${td(r.vendor)}${td(fmtAutoPlain(r.expense))}${td(r.payMethod)}${td(r.cardLast4)}${td(r.notes)}
     <td class="actions-cell">
       ${r.receiptImg
         ? `<button class="icon-btn view-attachment" title="View Attachment" data-i="${i}" data-type="home">${clipSVG()}</button>`
         : `<button class="icon-btn add-attachment" title="Add Attachment" data-i="${i}" data-type="home">${photoSVG()}</button>`}
-    </td>
-    <td class="actions-cell">
-      <button class="icon-btn edit-home" title="Edit" data-i="${i}">${pencilSVG()}</button>
-      <button class="icon-btn" title="Delete" data-act="del" data-type="home" data-i="${i}">${trashSVG()}</button>
     </td>`;
   return tr;
 }
@@ -756,11 +948,11 @@ function homeRowEl(r,i){
 function reimbOnlyRowEl(r,i){
   const tr=document.createElement("tr");
   tr.innerHTML=`
-    ${td(r.date)}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}
     <td class="actions-cell">
       <button class="icon-btn edit-reimbonly" title="Edit" data-i="${i}">${pencilSVG()}</button>
       <button class="icon-btn" title="Delete" data-act="del" data-type="reimbonly" data-i="${i}">${trashSVG()}</button>
-    </td>`;
+    </td>
+    ${td(r.date)}${td(fmtAutoPlain(r.amount))}${td(r.method)}${td(r.notes)}`;
   return tr;
 }
 
@@ -942,7 +1134,14 @@ function ensureUser(){ if (!currentUser) throw new Error("No signed-in user. DB 
 /* Fetch everything (KPIs unfiltered) */
 async function fetchRows(table, dateField="date"){
   ensureUser();
-  let q = supabase.from(table).select("*").order(dateField, { ascending: true });
+  
+  // Optimized query with better ordering and potential limits
+  let q = supabase
+    .from(table)
+    .select("*")
+    .order(dateField, { ascending: false }) // Recent first is often faster
+    .order("id", { ascending: false }); // Secondary sort for consistency
+    
   const { data, error } = await q;
   if (error) throw error;
   return data || [];
@@ -1039,22 +1238,56 @@ function mapReimbOnlyDBToUI(r){ return { id:r.id, date:r.date, amount:r.amount ?
 /* ===== DB-aware loading ===== */
 async function loadFromDBAndRender() {
   if (!currentUser) { renderAll(); return; }
+  
+  const startTime = performance.now();
+  showLoading("Loading data...");
+  
   try {
-    const [w, g, r, h] = await Promise.all([
-      fetchRows(T_WAGES, "date"),
-      fetchRows(T_WORK, "date"),
-      fetchRows(T_REIMB, "date"),
-      fetchRows(T_FAMILY, "date"),
+    // Load all tables in PARALLEL for faster performance
+    const loadTable = async (tableName, orderBy = "date") => {
+      try {
+        const tableStart = performance.now();
+        const result = await fetchRows(tableName, orderBy);
+        const tableTime = performance.now() - tableStart;
+        console.log(`Loaded ${tableName}: ${result.length} rows in ${tableTime.toFixed(0)}ms`);
+        return result;
+      } catch (error) {
+        console.warn(`Failed to load ${tableName}:`, error);
+        return []; // Return empty array if this table fails
+      }
+    };
+
+    // Start all requests simultaneously (parallel loading)
+    const [wages, work, reimb, family] = await Promise.all([
+      loadTable(T_WAGES, "date"),
+      loadTable(T_WORK, "date"), 
+      loadTable(T_REIMB, "date"),
+      loadTable(T_FAMILY, "date")
     ]);
-    wagesRows      = w.map(mapWageDBToUI);
-    reimbRows      = g.map(mapWorkDBToUI);
-    reimbOnlyRows  = r.map(mapReimbOnlyDBToUI);
-    homeRows       = h.map(mapFamilyDBToUI);
+
+    wagesRows = wages.map(mapWageDBToUI);
+    reimbRows = work.map(mapWorkDBToUI);
+    reimbOnlyRows = reimb.map(mapReimbOnlyDBToUI);
+    homeRows = family.map(mapFamilyDBToUI);
+    
+    const totalTime = performance.now() - startTime;
+    console.log(`Total data load completed in ${totalTime.toFixed(0)}ms`);
+    
     saveAll();
     renderAll();
+    hideLoading();
   } catch (e) {
-    console.error(e);
+    console.error("Error loading data:", e);
+    hideLoading();
+    // Still render with whatever data we have locally
     renderAll();
+    
+    // Show user-friendly error message
+    if (e.message?.includes('timeout') || e.code === '57014') {
+      toast("Database connection timeout. Using local data. Please try refreshing the page.");
+    } else {
+      toast("Unable to load latest data. Using local data.");
+    }
   }
 }
 
@@ -1248,29 +1481,40 @@ document.addEventListener("click",async (e)=>{
 
   // Wages
   if(t.id==="addWageRow") openWagesModal();
-  if(t.id==="closeWagesModal") $("#wagesModal").classList.remove("open");
+  if(t.id==="closeWagesModal") { $("#wagesModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="addWagesRow"){
     if(!validate($("#wDate"))||!validate($("#wHours"))||!validate($("#wAmount"))||!validate($("#wMethod"))){return;}
     const amountNorm = normMoney($("#wAmount").value);
     if (amountNorm === null){ $("#wAmount").classList.add("mandatory-missing"); return; }
     $("#wAmount").value = fmtAutoPlain(amountNorm);
 
+    setButtonLoading("addWagesRow", true);
+
     const editIdx = $("#wagesModal").dataset.editIdx;
     const existingId = editIdx!=="" ? wagesRows[+editIdx]?.id : undefined;
     const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value};
 
     if (currentUser) {
-      try { const saved = await upsertRow(T_WAGES, mapWageUIToDB(obj)); obj.id = saved.id; }
-      catch(e){ console.error(e); }
+      try { 
+        const saved = await upsertRow(T_WAGES, mapWageUIToDB(obj)); 
+        obj.id = saved.id; 
+      }
+      catch(e){ 
+        console.error(e);
+        setButtonLoading("addWagesRow", false);
+        return;
+      }
     }
 
     if(editIdx!=="") wagesRows[+editIdx]=obj; else wagesRows.push(obj);
-    renderWages(); saveAll(); $("#wagesModal").classList.remove("open");
+    renderWages(); saveAll(); 
+    setButtonLoading("addWagesRow", false);
+    $("#wagesModal").classList.remove("open"); removeBlurEffect();
   }
 
   // Work / Grocery
   if(t.id==="btnEnterReceipt") openReceiptModal();
-  if(t.id==="closeReceiptModal") $("#receiptModal").classList.remove("open");
+  if(t.id==="closeReceiptModal") { $("#receiptModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="attachReceiptBtn"){ byId("receiptFile").click(); }
   if(t.id==="addReceipt"){
     if(!validate($("#gDate"))||!validate($("#gVendor"))||!validate($("#gTotal"))||!validate($("#gPayMethod"))){return;}
@@ -1282,12 +1526,18 @@ document.addEventListener("click",async (e)=>{
     const method = $("#gPayMethod").value || "Credit Card";
     if(method.includes("Card") && !validate($("#gCardLast4"))){return;}
 
+    setButtonLoading("addReceipt", true);
+
     const editIdx = $("#receiptModal").dataset.editIdx;
     const existingId = editIdx!=="" ? reimbRows[+editIdx]?.id : undefined;
 
     let receiptUrl = pendingReceiptImage;
     if (currentUser && pendingReceiptImage) {
-      try { receiptUrl = await uploadReceiptToStorage(pendingReceiptImage, "work"); } catch (e) {}
+      try { 
+        receiptUrl = await uploadReceiptToStorage(pendingReceiptImage, "work"); 
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const obj={ id: existingId,
@@ -1296,40 +1546,60 @@ document.addEventListener("click",async (e)=>{
                 receiptImg: receiptUrl || null, receiptName: pendingReceiptName || ""};
 
     if (currentUser) {
-      try { const saved = await upsertRow(T_WORK, mapWorkUIToDB(obj)); obj.id = saved.id; }
-      catch(e){ console.error(e); }
+      try { 
+        const saved = await upsertRow(T_WORK, mapWorkUIToDB(obj)); 
+        obj.id = saved.id; 
+      }
+      catch(e){ 
+        console.error(e);
+        setButtonLoading("addReceipt", false);
+        return;
+      }
     }
 
     if(editIdx!=="") reimbRows[+editIdx]=obj; else reimbRows.push(obj);
     pendingReceiptImage = null; pendingReceiptName = "";
-    renderReimb(); saveAll(); $("#receiptModal").classList.remove("open");
+    renderReimb(); saveAll(); 
+    setButtonLoading("addReceipt", false);
+    $("#receiptModal").classList.remove("open"); removeBlurEffect();
   }
 
   // Reimbursement only
   if(t.id==="addReimbOnlyRow") openReimbOnlyModal();
-  if(t.id==="closeReimbOnlyModal") $("#reimbOnlyModal").classList.remove("open");
+  if(t.id==="closeReimbOnlyModal") { $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="addReimbOnlyRowSubmit"){
     if(!validate($("#rDate"))||!validate($("#rAmount"))||!validate($("#rMethod"))){return;}
     const amt = normMoney($("#rAmount").value);
     if (amt === null){ $("#rAmount").classList.add("mandatory-missing"); return; }
     $("#rAmount").value = fmtAutoPlain(amt);
 
+    setButtonLoading("addReimbOnlyRowSubmit", true);
+
     const editIdx = $("#reimbOnlyModal").dataset.editIdx;
     const existingId = editIdx!=="" ? reimbOnlyRows[+editIdx]?.id : undefined;
     const obj={ id: existingId, date:$("#rDate").value,amount:amt,method:$("#rMethod").value||"Cash",notes:$("#rNotes").value };
 
     if (currentUser) {
-      try { const saved = await upsertRow(T_REIMB, mapReimbOnlyUIToDB(obj)); obj.id = saved.id; }
-      catch(e){ console.error(e); }
+      try { 
+        const saved = await upsertRow(T_REIMB, mapReimbOnlyUIToDB(obj)); 
+        obj.id = saved.id; 
+      }
+      catch(e){ 
+        console.error(e);
+        setButtonLoading("addReimbOnlyRowSubmit", false);
+        return;
+      }
     }
 
     if(editIdx!=="") reimbOnlyRows[+editIdx]=obj; else reimbOnlyRows.push(obj);
-    renderReimbOnly(); saveAll(); $("#reimbOnlyModal").classList.remove("open");
+    renderReimbOnly(); saveAll(); 
+    setButtonLoading("addReimbOnlyRowSubmit", false);
+    $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect();
   }
 
   // Family
   if(t.id==="addFamilyRow") openFamilyModal();
-  if(t.id==="closeFamilyModal") $("#familyModal").classList.remove("open");
+  if(t.id==="closeFamilyModal") { $("#familyModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="attachFamilyBtn"){ byId("familyFile").click(); }
   if(t.id==="addFamilySubmit"){
     if(!validate($("#fDate"))||!validate($("#fVendor"))||!validate($("#fTotal"))||!validate($("#fPayMethod"))){return;}
@@ -1341,12 +1611,18 @@ document.addEventListener("click",async (e)=>{
     const method = $("#fPayMethod").value || "Credit Card";
     if(method.includes("Card") && !validate($("#fCardLast4"))){return;}
 
+    setButtonLoading("addFamilySubmit", true);
+
     const editIdx = $("#familyModal").dataset.editIdx;
     const existingId = editIdx!=="" ? homeRows[+editIdx]?.id : undefined;
 
     let receiptUrl = pendingFamilyImage;
     if (currentUser && pendingFamilyImage) {
-      try { receiptUrl = await uploadReceiptToStorage(pendingFamilyImage, "family"); } catch (e) {}
+      try { 
+        receiptUrl = await uploadReceiptToStorage(pendingFamilyImage, "family"); 
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     const obj={ id: existingId,
@@ -1355,13 +1631,22 @@ document.addEventListener("click",async (e)=>{
                 receiptImg: receiptUrl || null, receiptName: pendingFamilyName || "" };
 
     if (currentUser) {
-      try { const saved = await upsertRow(T_FAMILY, mapFamilyUIToDB(obj)); obj.id = saved.id; }
-      catch(e){ console.error(e); }
+      try { 
+        const saved = await upsertRow(T_FAMILY, mapFamilyUIToDB(obj)); 
+        obj.id = saved.id; 
+      }
+      catch(e){ 
+        console.error(e);
+        setButtonLoading("addFamilySubmit", false);
+        return;
+      }
     }
 
     if(editIdx!=="") homeRows[+editIdx]=obj; else homeRows.push(obj);
     pendingFamilyImage = null; pendingFamilyName = "";
-    renderHome(); saveAll(); $("#familyModal").classList.remove("open");
+    renderHome(); saveAll(); 
+    setButtonLoading("addFamilySubmit", false);
+    $("#familyModal").classList.remove("open"); removeBlurEffect();
   }
 
   // Edit via modals
@@ -1383,6 +1668,7 @@ document.addEventListener("click",async (e)=>{
     if(srcRow && srcRow.receiptImg){
       $("#previewImg").src = cleanAttachmentUrl(srcRow.receiptImg);
       $("#receiptPreviewModal").classList.add("open");
+      addBlurEffect();
     }
   }
   if(t.closest(".add-attachment")){
@@ -1422,6 +1708,7 @@ document.addEventListener("click",async (e)=>{
   // Close preview modal (button or clicking backdrop)
   if (t.id === "closePreviewModal" || (t.id === "receiptPreviewModal" && t.classList.contains("open"))) {
     byId("receiptPreviewModal").classList.remove("open");
+    removeBlurEffect();
   }
 });
 
@@ -1457,6 +1744,7 @@ function rowClickOpener(tbodyId, rowsArr, type){
     if (row && row.receiptImg){
       $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
       $("#receiptPreviewModal").classList.add("open");
+      addBlurEffect();
     }
   });
 }
@@ -1467,6 +1755,7 @@ function enhancedRowClickFallback(rowsArr, i){
   if (row && row.receiptImg){
     $("#previewImg").src = cleanAttachmentUrl(row.receiptImg);
     $("#receiptPreviewModal").classList.add("open");
+    addBlurEffect();
     return true;
   }
   return false;
@@ -1490,6 +1779,7 @@ function enhancedRowClickFallback(rowsArr, i){
           if (src){
             $("#previewImg").src = cleanAttachmentUrl(src);
             $("#receiptPreviewModal").classList.add("open");
+            addBlurEffect();
           }
         }
       }
@@ -1501,24 +1791,48 @@ function enhancedRowClickFallback(rowsArr, i){
 
 rowClickOpener("homeBody", homeRows, "home");
 
-// Also allow clicking backdrop to close preview
+// Add event listeners to prevent modal backdrop closing
+document.addEventListener("DOMContentLoaded", () => {
+  const modals = ["wagesModal", "receiptModal", "reimbOnlyModal", "familyModal"];
+  
+  modals.forEach(modalId => {
+    const modal = byId(modalId);
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        // Only prevent closing if clicking on the modal backdrop itself, not its children
+        if (e.target === modal) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+    }
+  });
+});
+
+// Disable backdrop closing for receipt preview modal too
 byId("receiptPreviewModal")?.addEventListener("click",(e)=>{
-  if (e.target.id === "receiptPreviewModal") e.currentTarget.classList.remove("open");
+  // Only prevent closing if clicking on the modal backdrop itself
+  if (e.target.id === "receiptPreviewModal") {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 });
 // ESC key closes preview
 document.addEventListener("keydown",(e)=>{
   if (e.key === "Escape" && byId("receiptPreviewModal")?.classList.contains("open")) {
     byId("receiptPreviewModal").classList.remove("open");
+    removeBlurEffect();
   }
 });
 
 /* ===== Open/Close Modals ===== */
 function openWagesModal(editIdx = null){
   $("#wagesModal").classList.add("open");
+  addBlurEffect();
   const seed = editIdx!=null ? wagesRows[editIdx] : {};
   $("#wDate").value   = seed?.date   || today();
   $("#wHours").value  = seed?.hours  ?? "";
-  $("#wAmount").value = fmtAutoPlain(seed?.amount ?? "0");
+  $("#wAmount").value = seed?.amount ? fmtAutoPlain(seed.amount) : "";
   $("#wMethod").value = seed?.method || "Cash";
   $("#wNotes").value  = seed?.notes  || "";
   $("#wagesModal").dataset.editIdx = editIdx!=null ? editIdx : "";
@@ -1526,10 +1840,11 @@ function openWagesModal(editIdx = null){
 
 function openReceiptModal(editIdx = null){
   $("#receiptModal").classList.add("open");
+  addBlurEffect();
   const seed = editIdx!=null ? reimbRows[editIdx] : {};
   $("#gDate").value       = seed?.date      || today();
   $("#gVendor").value     = seed?.vendor    || "";
-  $("#gTotal").value      = fmtAutoPlain(seed?.expense ?? "0");
+  $("#gTotal").value      = seed?.expense ? fmtAutoPlain(seed.expense) : "";
   $("#gPayMethod").value  = seed?.payMethod || "Credit Card";
   $("#gCardLast4").value  = seed?.cardLast4 || "";
   $("#gNotes").value      = seed?.notes     || "";
@@ -1544,10 +1859,11 @@ function openReceiptModal(editIdx = null){
 
 function openFamilyModal(editIdx = null){
   $("#familyModal").classList.add("open");
+  addBlurEffect();
   const seed = editIdx!=null ? homeRows[editIdx] : {};
   $("#fDate").value      = seed?.date      || today();
   $("#fVendor").value    = seed?.vendor    || "";
-  $("#fTotal").value     = fmtAutoPlain(seed?.expense ?? "0");
+  $("#fTotal").value     = seed?.expense ? fmtAutoPlain(seed.expense) : "";
   $("#fPayMethod").value = seed?.payMethod || "Credit Card";
   $("#fCardLast4").value  = seed?.cardLast4 || "";
   $("#fNotes").value     = seed?.notes     || "";
@@ -1563,12 +1879,28 @@ function openFamilyModal(editIdx = null){
 
 function openReimbOnlyModal(editIdx = null){
   $("#reimbOnlyModal").classList.add("open");
+  addBlurEffect();
   const seed = editIdx!=null ? reimbOnlyRows[editIdx] : {};
   $("#rDate").value   = seed?.date   || today();
-  $("#rAmount").value = fmtAutoPlain(seed?.amount ?? "0");
+  $("#rAmount").value = seed?.amount ? fmtAutoPlain(seed.amount) : "";
   $("#rMethod").value = seed?.method || "Cash";
   $("#rNotes").value  = seed?.notes  || "";
   $("#reimbOnlyModal").dataset.editIdx = editIdx!=null ? editIdx : "";
+}
+
+/* ===== Blur Effect Helpers ===== */
+function addBlurEffect() {
+  const header = document.querySelector('header');
+  const container = document.querySelector('.container');
+  if (header) header.style.filter = 'blur(2px)';
+  if (container) container.style.filter = 'blur(2px)';
+}
+
+function removeBlurEffect() {
+  const header = document.querySelector('header');
+  const container = document.querySelector('.container');
+  if (header) header.style.filter = '';
+  if (container) container.style.filter = '';
 }
 
 // --- Robust Enter-to-submit for Reimbursement modal ---

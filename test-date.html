@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Date Test</title>
+</head>
+<body>
+    <h1>Date Testing</h1>
+    <div id="results"></div>
+
+    <script>
+        function today(){ 
+            // Create a date in Pacific timezone (PST/PDT)
+            const now = new Date();
+            // Use Intl API to get Pacific time properly
+            const pacificTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+            return pacificTime.toISOString().split("T")[0]; 
+        }
+
+        const results = document.getElementById('results');
+        
+        const now = new Date();
+        const todayResult = today();
+        const utcDate = now.toISOString().split("T")[0];
+        const localDate = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+        
+        results.innerHTML = `
+            <p><strong>Current system time:</strong> ${now}</p>
+            <p><strong>UTC date:</strong> ${utcDate}</p>
+            <p><strong>Local date (YYYY-MM-DD):</strong> ${localDate}</p>
+            <p><strong>today() function result:</strong> ${todayResult}</p>
+            <p><strong>Expected (Sep 20, 2025):</strong> 2025-09-20</p>
+        `;
+    </script>
+</body>
+</html>
