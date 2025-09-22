@@ -232,7 +232,8 @@
       height:var(--row-h);
     }
     tbody tr:nth-child(even){ background:#f3f4f6; }
-    tbody tr:hover{ background:#e5e7eb; }
+  /* Do not apply hover background while flashing */
+  tbody tr:not(.row-highlight):hover{ background:#e5e7eb; }
     tbody tr[data-has-attachment="true"]{ cursor:pointer; }
 
     td.actions-cell{ white-space:nowrap; text-align:left; }
@@ -301,34 +302,33 @@
 
     /* Loading styles */
     .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    }
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none; /* showLoading sets display:flex */
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      }
     .loading-overlay.loading-active {
       display: flex;
     }
     .loading-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
     .loading-spinner {
       width: 50px;
       height: 50px;
       border: 4px solid #f3f3f3;
       border-top: 4px solid #3498db;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+  animation: spin 0.6s linear infinite;
       margin: 0 auto;
     }
     @keyframes spin {
@@ -356,7 +356,7 @@
       border: 2px solid transparent;
       border-top-color: #ffffff;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+  animation: spin 0.6s linear infinite;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -492,7 +492,7 @@
       border: 2px solid transparent;
       border-top: 2px solid #fff;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+  animation: spin 0.6s linear infinite;
     }
     @keyframes spin {
       0% { transform: translate(-50%, -50%) rotate(0deg); }
@@ -537,17 +537,15 @@
       background: rgba(255,255,255,0.3);
     }
     
-    /* Row highlight animation */
-    .row-highlight {
-      animation: flashHighlight 2s ease-in-out;
-    }
+  /* Row highlight animation: fast pulses; JS stops at 2s */
+  .row-highlight { animation: flashHighlight 0.33s steps(1,end) infinite; }
     @keyframes flashHighlight {
-      0% { background-color: transparent; }
-      25% { background-color: #ffff00; opacity: 0.9; }
-      50% { background-color: transparent; }
-      75% { background-color: #ffff00; opacity: 0.7; }
-      100% { background-color: transparent; }
+      0%,100% { background-color: #fff34d; }
+      50%     { background-color: transparent; }
     }
+    /* Hours/minutes picker */
+    .time-picker{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+    .time-picker select{width:100%}
     
     /* Empty placeholder rows styling */
     .empty-row {
@@ -658,7 +656,7 @@
         <span class="arrow">→</span>
         <input type="date" id="filterEnd" title="End date">
         <button class="mini-btn clear-btn" id="clearDateFilter" type="button">Clear</button>
-        <span class="version-badge">v3.5</span>
+  <span class="version-badge">v3.7</span>
       </div>
 
       <!-- WORK -->
@@ -752,21 +750,29 @@
         <div class="actions"><button class="btn warn sm" id="closeWagesModal">✕</button></div>
       </div>
       <div class="form-grid">
-        <label id="lblWDate">Date</label>
+        <label id="lblWDate" for="wDate">Date</label>
         <input id="wDate" type="date">
         
-        <label id="lblWHours">Hours</label>
-        <input id="wHours" type="number" step="0.01" min="0">
+        <label id="lblWHours" for="wHoursH">Hours</label>
+        <div id="wHoursPicker" class="time-picker" role="group" aria-labelledby="lblWHours">
+          <input id="wHours" type="hidden" aria-hidden="true">
+          <select id="wHoursH" aria-labelledby="lblWHours"></select>
+          <span>:</span>
+          <select id="wHoursM" aria-labelledby="lblWHours"></select>
+        </div>
         
-        <label id="lblWAmount">Wage Amount</label>
-        <input id="wAmount" type="number" step="0.01" min="0">
+  <label id="lblWHourly" for="wHourly">Hourly Wage</label>
+  <input id="wHourly" type="number" step="0.01" min="0" value="17">
         
-        <label id="lblWMethod">Method</label>
+        <label id="lblWAmount" for="wAmount">Wage</label>
+        <input id="wAmount" type="number" step="0.01" min="0" readonly>
+        
+        <label id="lblWMethod" for="wMethod">Method</label>
         <select id="wMethod">
           <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
         </select>
         
-        <label id="lblWNotes">Notes</label>
+        <label id="lblWNotes" for="wNotes">Notes</label>
         <input id="wNotes" type="text">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
@@ -783,10 +789,10 @@
         <div class="actions"><button class="btn warn sm" id="closeReceiptModal">✕</button></div>
       </div>
       <div class="form-grid">
-        <label id="lblGDate">Date</label>
-        <input id="gDate" type="date">
+  <label id="lblGDate" for="gDate">Date</label>
+    <input id="gDate" type="date">
         
-        <label id="lblGVendor">Store</label>
+    <label id="lblGVendor" for="gVendor">Store</label>
         <select id="gVendor">
           <option value="">Select Store...</option>
           <option value="A Dong">A Dong</option>
@@ -802,15 +808,15 @@
           <option value="Westminster">Westminster</option>
         </select>
         
-        <label id="lblGTotal">Total</label>
+        <label id="lblGTotal" for="gTotal">Total</label>
         <input id="gTotal" type="number" step="0.01">
         
-        <label id="lblGMethod">Method</label>
+        <label id="lblGMethod" for="gPayMethod">Method</label>
         <select id="gPayMethod">
           <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
         </select>
         
-        <label id="lblGCard">Last 4</label>
+        <label id="lblGCard" for="gCardLast4">Last 4</label>
         <select id="gCardLast4">
           <option value="">Select...</option>
           <option value="8208">8208</option>
@@ -818,11 +824,11 @@
           <option value="6514">6514</option>
         </select>
         
-        <label id="lblGNotes">Notes</label>
+  <label id="lblGNotes" for="gNotes">Notes</label>
         <input id="gNotes" type="text">
       </div>
       <div style="margin-top:8px;padding:0 10px;text-align:center;">
-        <input type="file" id="receiptFile" accept="image/*" style="display:none">
+  <input type="file" id="receiptFile" accept="image/*" style="display:none" aria-hidden="true">
         <button class="btn upload-btn" id="attachReceiptBtn">📎 Upload</button>
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
@@ -839,18 +845,18 @@
         <div class="actions"><button class="btn warn sm" id="closeReimbOnlyModal">✕</button></div>
       </div>
       <div class="form-grid">
-        <label id="lblRDate">Date</label>
-        <input id="rDate" type="date">
+  <label id="lblRDate" for="rDate">Date</label>
+  <input id="rDate" type="date">
         
-        <label id="lblRAmount">Amount</label>
+        <label id="lblRAmount" for="rAmount">Amount</label>
         <input id="rAmount" type="number" step="0.01">
         
-        <label id="lblRMethod">Method</label>
+        <label id="lblRMethod" for="rMethod">Method</label>
         <select id="rMethod">
           <option>Cash</option><option>Check</option><option>Zelle</option><option>Other</option>
         </select>
         
-        <label id="lblRNotes">Notes</label>
+        <label id="lblRNotes" for="rNotes">Notes</label>
         <input id="rNotes" type="text">
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
@@ -867,10 +873,10 @@
         <div class="actions"><button class="btn warn sm" id="closeFamilyModal">✕</button></div>
       </div>
       <div class="form-grid">
-        <label id="lblFDate">Date</label>
+  <label id="lblFDate" for="fDate">Date</label>
         <input id="fDate" type="date">
         
-        <label id="lblFVendor">Store</label>
+  <label id="lblFVendor" for="fVendor">Store</label>
         <select id="fVendor">
           <option value="">Select Store...</option>
           <option value="A Dong">A Dong</option>
@@ -886,15 +892,15 @@
           <option value="Westminster">Westminster</option>
         </select>
         
-        <label id="lblFTotal">Total</label>
+        <label id="lblFTotal" for="fTotal">Total</label>
         <input id="fTotal" type="number" step="0.01">
         
-        <label id="lblFMethod">Method</label>
+        <label id="lblFMethod" for="fPayMethod">Method</label>
         <select id="fPayMethod">
           <option>Credit Card</option><option>Debit Card</option><option>Cash</option><option>Check</option><option>Other</option>
         </select>
         
-        <label id="lblFCard">Last 4</label>
+        <label id="lblFCard" for="fCardLast4">Last 4</label>
         <select id="fCardLast4">
           <option value="">Select...</option>
           <option value="8208">8208</option>
@@ -902,11 +908,11 @@
           <option value="6514">6514</option>
         </select>
         
-        <label id="lblFNotes">Notes</label>
+  <label id="lblFNotes" for="fNotes">Notes</label>
         <input id="fNotes" type="text">
       </div>
       <div style="margin-top:8px;padding:0 10px;text-align:center;">
-        <input type="file" id="familyFile" accept="image/*" style="display:none">
+  <input type="file" id="familyFile" accept="image/*" style="display:none" aria-hidden="true">
         <button class="btn upload-btn" id="attachFamilyBtn">📎 Upload</button>
       </div>
       <div class="actions" style="justify-content:center;margin-top:8px">
@@ -950,6 +956,15 @@ const setText = (id, val) => { const el = byId(id); if (el) el.textContent = Str
 let wagesRows = [], reimbRows = [], reimbOnlyRows = [], homeRows = [];
 const KEY_WAGES="wagesRows_v1", KEY_REIMB="reimbRows_v1", KEY_REIMBONLY="reimbOnlyRows_v1", KEY_HOME="homeRows_v1";
 const SCALE_KEY = "ui_scale";
+const KEY_HOURLY = "hourlyWage";
+const DEFAULT_HOURLY = "17.00";
+const DEBUG = false;
+try {
+  if (!DEBUG) {
+    console.log = () => {};
+    console.warn = () => {};
+  }
+} catch {}
 let pendingReceiptImage = null, pendingReceiptName = ""; // Work
 let pendingFamilyImage = null,  pendingFamilyName  = ""; // Family
 let currentUser = null;
@@ -1054,7 +1069,7 @@ const langStrings = {
     appTitle: "Money Tracker",
     wages: "Wages", grocery: "Work Transactions", reimb: "Reimbursement", family: "Family Transactions",
     enterWage: "Enter Your Wage", enterReceipt: "Enter New Receipt", enterReimb: "Enter Your Reimbursement", enterFamily: "Enter Family Transaction",
-    date: "Date", hours: "Hours", wageAmount: "Wage Amount", method: "Method", notes: "Notes", actions: "Actions",
+  date: "Date", hours: "Hours", wageAmount: "Wage", method: "Method", notes: "Notes", actions: "Actions", hourlyWage: "Hourly Wage", setWage: "Set Wage",
     total: "Total", store: "Store", last4: "Last 4", amount: "Amount", attachment: "Attachment",
     kpiReceipts: "Total Family", kpiExp: "Total Expense", kpiReimb: "Total Reimbursed", kpiWages: "Total Wages",
     emptyWages: "No wage records yet", emptyGrocery: "No work transactions yet", emptyReimb: "No reimbursements yet", emptyFamily: "No family transactions yet",
@@ -1077,7 +1092,7 @@ const langStrings = {
     appTitle: "Theo dõi tiền",
     wages: "Lương", grocery: "Giao dịch công việc", reimb: "Hoàn tiền", family: "Chi tiêu gia đình",
     enterWage: "Nhập lương", enterReceipt: "Nhập hóa đơn mới", enterReimb: "Nhập hoàn tiền", enterFamily: "Nhập giao dịch gia đình",
-    date: "Ngày", hours: "Giờ", wageAmount: "Tiền lương", method: "Phương thức", notes: "Ghi chú", actions: "Thao tác",
+  date: "Ngày", hours: "Giờ", wageAmount: "Tiền lương", method: "Phương thức", notes: "Ghi chú", actions: "Thao tác", hourlyWage: "Lương theo giờ", setWage: "Đặt lương",
     total: "Tổng cộng", store: "Cửa hàng", last4: "4 số cuối", amount: "Số tiền", attachment: "Đính kèm",
     kpiReceipts: "Tổng gia đình", kpiExp: "Tổng chi tiêu", kpiReimb: "Tổng hoàn trả", kpiWages: "Tổng lương",
     emptyWages: "Chưa có dữ liệu lương", emptyGrocery: "Chưa có giao dịch công việc", emptyReimb: "Chưa có hoàn tiền", emptyFamily: "Chưa có giao dịch gia đình",
@@ -1131,6 +1146,7 @@ function setLang(code){
 
   byId("attachReceiptBtn")?.replaceChildren(t.upload);
   byId("attachFamilyBtn")?.replaceChildren(t.upload);
+  // removed setHourlyWageBtn
 
   byId("kpiReceiptsLabel")?.replaceChildren(t.kpiReceipts);
   byId("kpiExpLabel")?.replaceChildren(t.kpiExp);
@@ -1213,6 +1229,7 @@ function updateFieldLabels(){
   // Wages modal labels
   if (byId("lblWDate")) byId("lblWDate").childNodes[0].textContent = t.date;
   if (byId("lblWHours")) byId("lblWHours").childNodes[0].textContent = t.hours;
+  if (byId("lblWHourly")) byId("lblWHourly").childNodes[0].textContent = t.hourlyWage;
   if (byId("lblWAmount")) byId("lblWAmount").childNodes[0].textContent = t.wageAmount;
   if (byId("lblWMethod")) byId("lblWMethod").childNodes[0].textContent = t.method;
   if (byId("lblWNotes")) byId("lblWNotes").childNodes[0].textContent = t.notes;
@@ -1227,6 +1244,7 @@ function updateFieldLabels(){
   
   // Reimbursement modal labels
   if (byId("lblRDate")) byId("lblRDate").childNodes[0].textContent = t.date;
+  if (byId("lblRHourly")) byId("lblRHourly").childNodes[0].textContent = t.hourlyWage;
   if (byId("lblRAmount")) byId("lblRAmount").childNodes[0].textContent = t.amount;
   if (byId("lblRMethod")) byId("lblRMethod").childNodes[0].textContent = t.method;
   if (byId("lblRNotes")) byId("lblRNotes").childNodes[0].textContent = t.notes;
@@ -1244,7 +1262,43 @@ document.addEventListener("DOMContentLoaded", ()=>{
   document.getElementById("langSwitch").addEventListener("change", e => setLang(e.target.value));
   // Initialize field labels with current language
   updateFieldLabels();
+  initHoursPicker();
+  updateHourlyDisplay();
+  // Ensure default hourly exists
+  if (!localStorage.getItem(KEY_HOURLY)) {
+    localStorage.setItem(KEY_HOURLY, DEFAULT_HOURLY);
+  }
+  // Recalc amount when hourly changes
+  byId("wHourly")?.addEventListener('input', recalcWageAmount);
 });
+
+function updateHourlyDisplay(){ /* no-op after removing header wage indicator */ }
+
+function initHoursPicker(){
+  const hSel = byId("wHoursH");
+  const mSel = byId("wHoursM");
+  if (!hSel || !mSel) return;
+  hSel.innerHTML = Array.from({length: 25}, (_,i)=>`<option value="${i}">${i}</option>`).join("");
+  const minutes = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+  mSel.innerHTML = minutes.map(m=>`<option value="${m}">${m}</option>`).join("");
+  const sync = ()=>{
+    const h = Number(hSel.value||0);
+    const m = Number(mSel.value||0);
+    const total = (h + m/60).toFixed(2);
+    if (byId("wHours")) byId("wHours").value = total;
+    recalcWageAmount();
+  };
+  hSel.addEventListener('change', sync);
+  mSel.addEventListener('change', sync);
+}
+
+function recalcWageAmount(){
+  const hoursStr = byId("wHours")?.value || "0";
+  const hoursNum = Number(hoursStr || 0);
+  const hourlyNum = Number((byId("wHourly")?.value || localStorage.getItem(KEY_HOURLY) || DEFAULT_HOURLY));
+  const amt = (hoursNum * hourlyNum).toFixed(2);
+  if (byId("wAmount")) byId("wAmount").value = fmtAutoPlain(amt);
+}
 
 /* ===== UI Helpers ===== */
 function toast(msg){ /* quiet */ }
@@ -1391,7 +1445,7 @@ function highlightNewRow(tableBodyId, rowIndex) {
   // Scroll the highlighted row into view (since newest rows are now at top)
   row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   
-  // Remove the class after animation completes
+  // Remove the class after 2 seconds
   setTimeout(() => {
     row.classList.remove('row-highlight');
   }, 2000);
@@ -1714,7 +1768,7 @@ function updateKpis(){
 
   // KPI #1 shows Total Family
   $("#kCount").textContent = fmtAutoCurrency(sum(homeRows,"expense"));
-  $("#kExp").textContent   = fmtAutoCurrency(sum(reimbRows,"expense") + sum(homeRows,"expense"));
+  $("#kExp").textContent   = fmtAutoCurrency(sum(reimbRows,"expense"));
   $("#kReimb").textContent = fmtAutoCurrency(sum(reimbOnlyRows,"amount"));
   $("#kWages").textContent = fmtAutoCurrency(sum(wagesRows,"amount"));
 }
@@ -1977,7 +2031,7 @@ async function loadFromDBAndRender() {
   if (!currentUser) { renderAll(); return; }
   
   const startTime = performance.now();
-  showLoading("Loading data...");
+  showLoading("Processing...");
   updateConnectionStatus("connecting");
   
   try {
@@ -2301,15 +2355,19 @@ document.addEventListener("click",async (e)=>{
   if(t.id==="addWageRow") openWagesModal();
   if(t.id==="closeWagesModal") { $("#wagesModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="addWagesRow"){
-    if(!validate($("#wDate"))||!validate($("#wHours"))||!validate($("#wAmount"))||!validate($("#wMethod"))){return;}
-    const amountNorm = normMoney($("#wAmount").value);
+    if(!validate($("#wDate"))||!validate($("#wHours"))||!validate($("#wMethod"))){return;}
+    // Calculate amount from hours * hourly
+    const hoursNum = Number($("#wHours").value||0);
+    const hourlyNum = Number($("#wHourly")?.value || localStorage.getItem(KEY_HOURLY) || DEFAULT_HOURLY);
+    const amountCalc = (hoursNum * hourlyNum).toFixed(2);
+    const amountNorm = normMoney(amountCalc);
     if (amountNorm === null){ $("#wAmount").classList.add("mandatory-missing"); return; }
     $("#wAmount").value = fmtAutoPlain(amountNorm);
 
     await safeSubmit("wagesModal", "addWagesRow", async () => {
       const editIdx = $("#wagesModal").dataset.editIdx;
       const existingId = editIdx!=="" ? wagesRows[+editIdx]?.id : undefined;
-      const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value};
+  const obj={id: existingId, date:$("#wDate").value,hours:$("#wHours").value,amount:amountNorm,method:$("#wMethod").value||"Cash",notes:$("#wNotes").value, hourly: fmtAutoPlain(hourlyNum)};
 
       if (currentUser) {
         const saved = await upsertRow(T_WAGES, mapWageUIToDB(obj)); 
@@ -2382,12 +2440,15 @@ document.addEventListener("click",async (e)=>{
 
   // Reimbursement only
   if(t.id==="addReimbOnlyRow") openReimbOnlyModal();
+  // removed setHourlyWageBtn handler
   if(t.id==="closeReimbOnlyModal") { $("#reimbOnlyModal").classList.remove("open"); removeBlurEffect(); }
   if(t.id==="addReimbOnlyRowSubmit"){
     if(!validate($("#rDate"))||!validate($("#rAmount"))||!validate($("#rMethod"))){return;}
     const amt = normMoney($("#rAmount").value);
     if (amt === null){ $("#rAmount").classList.add("mandatory-missing"); return; }
     $("#rAmount").value = fmtAutoPlain(amt);
+
+    // no hourly wage input in reimbursement modal anymore
 
     await safeSubmit("reimbOnlyModal", "addReimbOnlyRowSubmit", async () => {
       const editIdx = $("#reimbOnlyModal").dataset.editIdx;
@@ -2645,8 +2706,27 @@ function openWagesModal(editIdx = null){
   addBlurEffect();
   const seed = editIdx!=null ? wagesRows[editIdx] : {};
   $("#wDate").value   = seed?.date   || today();
-  $("#wHours").value  = seed?.hours  ?? "";
-  $("#wAmount").value = seed?.amount ? fmtAutoPlain(seed.amount) : "";
+  const hSel = byId("wHoursH"), mSel = byId("wHoursM");
+  if (seed?.hours != null && seed?.hours !== ""){
+    const total = Number(seed.hours) || 0;
+    const h = Math.floor(total);
+    const m = Math.round((total - h) * 60);
+    if (hSel) hSel.value = String(h);
+    if (mSel) mSel.value = String(m).padStart(2,'0');
+    $("#wHours").value = (h + m/60).toFixed(2);
+  } else {
+    if (hSel) hSel.value = "0";
+    if (mSel) mSel.value = "00";
+    $("#wHours").value = "";
+  }
+  // Set hourly: from seed if present, else saved default
+  const savedHourly = localStorage.getItem(KEY_HOURLY) || DEFAULT_HOURLY;
+  if (byId("wHourly")) byId("wHourly").value = seed?.hourly ? fmtAutoPlain(seed.hourly) : fmtAutoPlain(savedHourly);
+  // Compute amount
+  const hoursVal = Number($("#wHours").value||0);
+  const hourlyVal = Number(byId("wHourly")?.value || savedHourly);
+  const preAmt = (hoursVal * hourlyVal).toFixed(2);
+  $("#wAmount").value = seed?.amount ? fmtAutoPlain(seed.amount) : fmtAutoPlain(preAmt);
   $("#wMethod").value = seed?.method || "Cash";
   $("#wNotes").value  = seed?.notes  || "";
   $("#wagesModal").dataset.editIdx = editIdx!=null ? editIdx : "";
@@ -2696,6 +2776,7 @@ function openReimbOnlyModal(editIdx = null){
   addBlurEffect();
   const seed = editIdx!=null ? reimbOnlyRows[editIdx] : {};
   $("#rDate").value   = seed?.date   || today();
+  // no hourly wage input in reimbursement modal anymore
   $("#rAmount").value = seed?.amount ? fmtAutoPlain(seed.amount) : "";
   $("#rMethod").value = seed?.method || "Cash";
   $("#rNotes").value  = seed?.notes  || "";
@@ -2923,7 +3004,7 @@ document.getElementById("importExcel").addEventListener("change", e=>{
 });
 
 (async () => {
-  console.log("🚀 Money Tracker v3.5 - Application Starting");
+  console.log("🚀 Money Tracker v3.7 - Application Starting");
   console.log("📅 Build Date:", new Date().toISOString());
   console.log("🔧 Features: RLS Security, Image Migration, Enhanced UI, Optimized Base64 with Compression");
   
@@ -2934,7 +3015,7 @@ document.getElementById("importExcel").addEventListener("change", e=>{
   if (currentUser) await loadFromDBAndRender();
   preflightStorage();
   
-  console.log("✅ Money Tracker v3.5 - Application Ready");
+  console.log("✅ Money Tracker v3.7 - Application Ready");
 })();
 </script>
 
